@@ -60,10 +60,16 @@ namespace m1
         void SetViewportArea(const ViewportSpace &viewSpace, glm::vec3 colorColor = glm::vec3(0), bool clear = true);
 
      protected:
-        float length;
         ViewportSpace viewSpace;
         LogicSpace logicSpace;
         glm::mat3 modelMatrix, visMatrix;
         float x_char, y_char, rad_char, vx_char, vy_char;
+        float body_rad;
+        float x_proj, y_proj;
+        float x_hb, y_hb, health;
+        /*float x_o1, y_o1, sx_o1, sy_o1,
+            x_o2, y_o2, sx_o2, sy_o2,
+            x_o3, y_o3, sx_o3, sy_o3,
+            x_o4, y_o4, sx_o4, sy_o4;*/
     };
 }   // namespace m1
