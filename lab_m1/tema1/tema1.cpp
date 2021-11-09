@@ -239,7 +239,7 @@ void Tema1::OnKeyRelease(int key, int mods)
 void Tema1::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 {
     // Add mouse move event
-    float x_mouse = mouseX / logicSpace.width / 2 - 5;
+    float x_mouse = mouseX / logicSpace.width / 2 - logicSpace.width / 4;
     float y_mouse = logicSpace.height - (mouseY / logicSpace.height) / 2;
     if (y_mouse > y_char) {
         rad_char = -atan((x_mouse - x_char) / (y_mouse - y_char));
