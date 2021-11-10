@@ -4,7 +4,7 @@
 #include <vector>
 using namespace std;
 
-#define MAX_PROJ_DIST 50
+#define MAX_PROJ_DIST 100
 
 namespace m1
 {
@@ -53,6 +53,8 @@ namespace m1
         void OnMouseBtnPress(int mouseX, int mouseY, int button, int mods) override;
         void OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods) override;
         void OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) override;
+        bool ok_obstacle(float x, float y, float len);
+        bool target_enemy(int id);
 
         // Sets the logic space and view space
         // logicSpace: { x, y, width, height }
@@ -70,15 +72,17 @@ namespace m1
         float body_rad;
         float x_proj, y_proj;
         float x_hb, y_hb, health;
-        /*float x_o1, y_o1, sx_o1, sy_o1,
-            x_o2, y_o2, sx_o2, sy_o2,
-            x_o3, y_o3, sx_o3, sy_o3,
-            x_o4, y_o4, sx_o4, sy_o4;*/
+
         vector<float> x_pr, y_pr, rad_pr, x_dir_pr, y_dir_pr, dist_x_pr, dist_y_pr;
         vector<bool> pr_status;
-        float proj_cooldown;
+        float proj_cooldown, len_pr;
+
         vector<float> x_en, y_en, rad_en, en_speed;
         vector<bool> en_status;
-        float en_cooldown;
+        float en_cooldown, len_en;
+
+        vector<float> x_o, y_o, sx_o, sy_o;
+
+        float x_sc, y_sc, score;
     };
 }   // namespace m1

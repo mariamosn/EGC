@@ -16,33 +16,6 @@ float x_o1, y_o1, sx_o1, sy_o1,
         x_o4, y_o4, sx_o4, sy_o4,
         length;
 
-// TODO: Coliziunile
-int ok_x(float x) {
-    return 1;
-    int ok1 = 0, ok2 = 0, ok3 = 0, ok4 = 0;
-    if (x <= x_o1 || x >= x_o1 + length * sx_o1) {
-        ok1 = 1;
-    }
-    if (x <= x_o2 || x >= x_o2 + length * sx_o2) {
-        ok2 = 1;
-    }
-    if (x <= x_o3 || x >= x_o3 + length * sx_o3) {
-        ok3 = 1;
-    }
-    if (x <= x_o4 || x >= x_o4 + length * sx_o4) {
-        ok4 = 1;
-    }
-
-    if (ok1 && ok2 && ok3 && ok4) {
-        return 1;
-    }
-    return 0;
-}
-
-int ok_y(float y) {
-    return 1;
-}
-
 /*
  *  To find out more about `FrameStart`, `Update`, `FrameEnd`
  *  and the order in which they are called, see `world.cpp`.
@@ -58,6 +31,31 @@ Tema1::~Tema1()
 {
 }
 
+bool Tema1::ok_obstacle(float x, float y, float len) {
+    for (int i = 0; i < x_o.size(); i++) {
+        if (x + len >= x_o[i] && x - len <= x_o[i] + sx_o[i] &&
+            y + len >= y_o[i] && y - len <= y_o[i] + sy_o[i])  {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Tema1::target_enemy(int id) {
+    for (int i = 0; i < x_en.size() && pr_status[id]; i++) {
+        if (en_status[i] &&
+            x_pr[id] + len_pr / 2 >= x_en[i] - len_en / 2 && x_pr[id] - len_pr / 2 <= x_en[i] + len_en / 2 &&
+            y_pr[id] + len_pr / 2 >= y_en[i] - len_en / 2 && y_pr[id] - len_pr / 2 <= y_en[i] + len_en / 2) {
+            en_status[i] = false;
+            pr_status[id] = false;
+            if (score < 10) {
+                score++;
+            }
+            return true;
+        }
+    }
+    return false;
+}
 
 void Tema1::Init()
 {
@@ -79,6 +77,7 @@ void Tema1::Init()
     glm::vec3 corner_map = glm::vec3(-10, 0, -10);
 
     length = body_rad = 1;
+    len_en = 2;
     float map_length = 40;
 
     // map
@@ -90,11 +89,12 @@ void Tema1::Init()
     AddMeshToList(square2);
 
     // projectiles
-    Mesh* square3 = object2D::CreateSquareCentered("square3", center2, length, glm::vec3(0, 0, 0), true);
+    len_pr = 0.3;
+    Mesh* square3 = object2D::CreateSquareCentered("square3", center2, len_pr, glm::vec3(0, 0, 0), true);
     AddMeshToList(square3);
 
     // enemies
-    Mesh* square4 = object2D::CreateSquareCentered("square4", center2, length, glm::vec3(1, 0, 0), true);
+    Mesh* square4 = object2D::CreateSquareCentered("square4", center2, len_en, glm::vec3(1, 0, 0), true);
     AddMeshToList(square4);
 
     // healthbar
@@ -103,6 +103,13 @@ void Tema1::Init()
 
     Mesh* square6 = object2D::CreateSquare("square6", center3, length, glm::vec3(1, 0, 0.75), true);
     AddMeshToList(square6);
+
+    // score
+    Mesh* square7 = object2D::CreateSquare("square7", center3, length, glm::vec3(0, 0, 0.75), false);
+    AddMeshToList(square7);
+
+    Mesh* square8 = object2D::CreateSquare("square8", center3, length, glm::vec3(0, 0, 0.75), true);
+    AddMeshToList(square8);
 
     // eyes
     Mesh* circle2 = object2D::CreateCircle("circle2", center2, length, glm::vec3(0, 1, 1));
@@ -122,33 +129,38 @@ void Tema1::Init()
     rad_char = 0;
 
     // obstracle 1
-    x_o1 = 1;
-    y_o1 = 1;
-    sx_o1 = 1;
-    sy_o1 = 20;
+    x_o.push_back(1);
+    y_o.push_back(1);
+    sx_o.push_back(1);
+    sy_o.push_back(20);
 
     // obstracle 2
-    x_o2 = 10;
-    y_o2 = 2;
-    sx_o2 = 15;
-    sy_o2 = 2;
+    x_o.push_back(10);
+    y_o.push_back(2);
+    sx_o.push_back(15);
+    sy_o.push_back(2);
 
     // obstracle 3
-    x_o3 = 0;
-    y_o3 = 20;
-    sx_o3 = 15;
-    sy_o3 = 1;
+    x_o.push_back(0);
+    y_o.push_back(20);
+    sx_o.push_back(15);
+    sy_o.push_back(1);
 
     // obstracle 4
-    x_o4 = -5;
-    y_o4 = 30;
-    sx_o4 = 30;
-    sy_o4 = 2;
+    x_o.push_back(-5);
+    y_o.push_back(30);
+    sx_o.push_back(30);
+    sy_o.push_back(2);
 
     // healthbar
     x_hb = logicSpace.x - 7;
     y_hb = logicSpace.height - 2;
     health = 10;
+
+    // score
+    score = 0;
+    x_sc = logicSpace.x - 7;
+    y_sc = logicSpace.height - 4;
 
     // projectile
     proj_cooldown = 0;
@@ -238,7 +250,7 @@ void Tema1::Update(float deltaTimeSeconds)
         if (pr_status[i]) {
             if (x_pr[i] + deltaTimeSeconds * x_dir_pr[i] + 0.15 <= logicSpace.width + 9 &&
                 x_pr[i] + deltaTimeSeconds * x_dir_pr[i] - 0.15 >= -9 &&
-                ok_x(x_pr[i] + deltaTimeSeconds * x_dir_pr[i])) {
+                ok_obstacle(x_pr[i] + deltaTimeSeconds * x_dir_pr[i], y_pr[i], len_pr / 2)) {
                 x_pr[i] += deltaTimeSeconds * x_dir_pr[i];
                 dist_x_pr[i] += deltaTimeSeconds * x_dir_pr[i];
             }
@@ -248,13 +260,15 @@ void Tema1::Update(float deltaTimeSeconds)
 
             if (y_pr[i] + deltaTimeSeconds * y_dir_pr[i] + 0.15 <= viewSpace.height / logicSpace.height + 3 &&
                 y_pr[i] + deltaTimeSeconds * y_dir_pr[i] - 0.15 >= 1 &&
-                ok_y(y_pr[i] + deltaTimeSeconds * y_dir_pr[i])) {
+                ok_obstacle(x_pr[i], y_pr[i] + deltaTimeSeconds * y_dir_pr[i], len_pr / 2)) {
                     y_pr[i] += deltaTimeSeconds * y_dir_pr[i];
                     dist_y_pr[i] += deltaTimeSeconds * y_dir_pr[i];
             }
             else {
                 pr_status[i] = false;
             }
+
+            target_enemy(i);
 
             if (dist_x_pr[i] * dist_x_pr[i] + dist_y_pr[i] * dist_y_pr[i] >= MAX_PROJ_DIST) {
                 pr_status[i] = false;
@@ -348,36 +362,29 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
     RenderMesh2D(meshes["square1"], shaders["VertexColor"], modelMatrix);
 
     // obstacles
-    modelMatrix = visMatrix * transform2D::Translate(x_o1, y_o1) * transform2D::Scale(sx_o1, sy_o1);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
+    for (int i = 0; i < x_o.size(); i++) {
+        modelMatrix = visMatrix * transform2D::Translate(x_o[i], y_o[i]) * transform2D::Scale(sx_o[i], sy_o[i]);
+        RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
+    }
 
-    modelMatrix = visMatrix * transform2D::Translate(x_o2, y_o2) * transform2D::Scale(sx_o2, sy_o2);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
-
-    modelMatrix = visMatrix * transform2D::Translate(x_o3, y_o3) * transform2D::Scale(sx_o3, sy_o3);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
-
-    modelMatrix = visMatrix * transform2D::Translate(x_o4, y_o4) * transform2D::Scale(sx_o4, sy_o4);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
-
-    // TODO projectile
+    // projectile
     for (int i = 0; i < x_pr.size(); i++) {
         if (pr_status[i]) {
-            modelMatrix = visMatrix * transform2D::Translate(x_pr[i], y_pr[i]) * transform2D::Rotate(rad_pr[i]) * transform2D::Translate(0, 1) * transform2D::Scale(0.3, 0.3);
+            modelMatrix = visMatrix * transform2D::Translate(x_pr[i], y_pr[i]) * transform2D::Rotate(rad_pr[i]) * transform2D::Translate(0, 1);
             RenderMesh2D(meshes["square3"], shaders["VertexColor"], modelMatrix);
         }
     }
 
-    // TODO enemy
+    // enemy
     for (int i = 0; i < x_en.size(); i++) {
         if (en_status[i]) {
-            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Translate(1, 1) * transform2D::Scale(0.3, 0.3);
+            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Translate(1, 1) * transform2D::Scale(0.15, 0.15);
             RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
 
-            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Translate(-1, 1) * transform2D::Scale(0.3, 0.3);
+            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Translate(-1, 1) * transform2D::Scale(0.15, 0.15);
             RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
 
-            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Scale(2, 2);
+            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]);
             RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
         }
     }
@@ -388,6 +395,13 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
 
     modelMatrix = visMatrix * transform2D::Translate(x_hb, y_hb) * transform2D::Scale(health, 1.5);
     RenderMesh2D(meshes["square6"], shaders["VertexColor"], modelMatrix);
+
+    // score
+    modelMatrix = visMatrix * transform2D::Translate(x_sc, y_sc) * transform2D::Scale(10, 1.5);
+    RenderMesh2D(meshes["square7"], shaders["VertexColor"], modelMatrix);
+
+    modelMatrix = visMatrix * transform2D::Translate(x_sc, y_sc) * transform2D::Scale(score, 1.5);
+    RenderMesh2D(meshes["square8"], shaders["VertexColor"], modelMatrix);
 }
 
 
@@ -401,30 +415,34 @@ void Tema1::OnInputUpdate(float deltaTime, int mods)
 {
     float speed = 10;
     if (window->KeyHold(GLFW_KEY_W)) {
-        if (y_char + deltaTime * speed <=  viewSpace.height / logicSpace.height + 3 && ok_y(y_char + deltaTime * speed + body_rad)) {
+        if (y_char + deltaTime * speed <=  viewSpace.height / logicSpace.height + 3 && ok_obstacle(x_char, y_char + deltaTime * speed, body_rad)) {
             y_char += deltaTime * speed;
             y_hb += deltaTime * speed;
+            y_sc += deltaTime * speed;
             logicSpace.y += deltaTime * speed;
         }
     }
     if (window->KeyHold(GLFW_KEY_A)) {
-        if (x_char - deltaTime * speed - body_rad >= -10 && ok_x(x_char - deltaTime * speed - body_rad)) {
+        if (x_char - deltaTime * speed - body_rad >= -10 && ok_obstacle(x_char - deltaTime * speed, y_char, body_rad)) {
             x_char -= deltaTime * speed;
             x_hb -= deltaTime * speed;
+            x_sc -= deltaTime * speed;
             logicSpace.x -= deltaTime * speed;
         }
     }
     if (window->KeyHold(GLFW_KEY_S)) {
-        if (y_char - deltaTime * speed - body_rad >= 0 && ok_y(y_char - deltaTime * speed - body_rad)) {
+        if (y_char - deltaTime * speed - body_rad >= 0 && ok_obstacle(x_char, y_char - deltaTime * speed, body_rad)) {
             y_char -= deltaTime * speed;
             y_hb -= deltaTime * speed;
+            y_sc -= deltaTime * speed;
             logicSpace.y -= deltaTime * speed;
         }
     }
     if (window->KeyHold(GLFW_KEY_D)) {
-        if (x_char + deltaTime * speed + body_rad <= logicSpace.width + 10 && ok_x(x_char + deltaTime * speed + body_rad)) {
+        if (x_char + deltaTime * speed + body_rad <= logicSpace.width + 10 && ok_obstacle(x_char + deltaTime * speed, y_char, body_rad)) {
             x_char += deltaTime * speed;
             x_hb += deltaTime * speed;
+            x_sc += deltaTime * speed;
             logicSpace.x += deltaTime * speed;
         }
     }
