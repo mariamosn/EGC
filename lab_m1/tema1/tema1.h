@@ -84,5 +84,7 @@ namespace m1
         vector<float> x_o, y_o, sx_o, sy_o;
 
         float x_sc, y_sc, score;
+        float x_heal, y_heal;
+        int heal_time;
     };
 }   // namespace m1

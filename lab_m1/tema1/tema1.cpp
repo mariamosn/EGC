@@ -123,6 +123,10 @@ void Tema1::Init()
     Mesh* triangle = object2D::CreateTriangle("triangle", center1, length, glm::vec3(0.5, 1, 0.5));
     AddMeshToList(triangle);
 
+    // healer bonus
+    Mesh* circle3 = object2D::CreateCircle("circle3", corner, body_rad / 2, glm::vec3(0, 0.5, 0.2));
+    AddMeshToList(circle3);
+
     // character
     x_char = logicSpace.width / 2;
     y_char = logicSpace.height / 2;
@@ -167,6 +171,10 @@ void Tema1::Init()
 
     // enemy
     en_cooldown = 500;
+
+    // healer bonus
+    heal_time = 500;
+    x_heal = y_heal = 25;
 }
 
 // 2D visualization matrix
@@ -329,6 +337,31 @@ void Tema1::Update(float deltaTimeSeconds)
         en_cooldown = 500;
     }
 
+    if (health <= 0) {
+        cout << "YOU LOST!\n";
+        score = 0;
+        health = 10;
+    }
+    if (score >= 10) {
+        cout << "YOU WON!\n";
+        score = 0;
+        health = 10;
+    }
+
+    // healer bonus
+    heal_time--;
+    if (heal_time < 0) {
+        x_heal = ((float)rand() * (logicSpace.width + 15)) / RAND_MAX - 8;
+        y_heal = ((float)rand() * viewSpace.height / logicSpace.height) / RAND_MAX + 2;
+        heal_time = 500;
+    }
+
+    if (x_char + body_rad >= x_heal - body_rad / 2 && x_char - body_rad <= x_heal + body_rad / 2 &&
+        y_char + body_rad >= y_heal - body_rad / 2 && y_char - body_rad <= y_heal + body_rad / 2) {
+        health = 10;
+        heal_time = 0;
+    }
+
 }
 
 
@@ -402,6 +435,10 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
 
     modelMatrix = visMatrix * transform2D::Translate(x_sc, y_sc) * transform2D::Scale(score, 1.5);
     RenderMesh2D(meshes["square8"], shaders["VertexColor"], modelMatrix);
+
+    // healer bonus
+    modelMatrix = visMatrix * transform2D::Translate(x_heal, y_heal);
+    RenderMesh2D(meshes["circle3"], shaders["VertexColor"], modelMatrix);
 }
 
 
