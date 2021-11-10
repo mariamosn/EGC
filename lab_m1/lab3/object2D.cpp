@@ -37,6 +37,52 @@ Mesh* object2D::CreateSquare(
     return square;
 }
 
+Mesh* object2D::CreateSquareCentered(
+    const std::string& name,
+    glm::vec3 center,
+    float length,
+    glm::vec3 color,
+    bool fill)
+{
+
+    std::vector<VertexFormat> vertices =
+    {
+        VertexFormat(center + glm::vec3(0, 0, 0), color),
+        VertexFormat(center + glm::vec3(- length / 2, - length / 2, 0), color),
+        VertexFormat(center + glm::vec3(length / 2, - length / 2, 0), color),
+        VertexFormat(center + glm::vec3(length / 2, length / 2, 0), color),
+        VertexFormat(center + glm::vec3(- length / 2, length / 2, 0), color)
+    };
+
+    Mesh* square = new Mesh(name);
+    std::vector<unsigned int> indices;
+
+    if (!fill) {
+        square->SetDrawMode(GL_LINE_LOOP);
+    }
+    else {
+        // Draw 2 triangles. Add the remaining 2 indices
+        indices.push_back(0);
+        indices.push_back(1);
+        indices.push_back(2);
+
+        indices.push_back(0);
+        indices.push_back(2);
+        indices.push_back(3);
+
+        indices.push_back(0);
+        indices.push_back(4);
+        indices.push_back(3);
+
+        indices.push_back(0);
+        indices.push_back(1);
+        indices.push_back(4);
+    }
+
+    square->InitFromData(vertices, indices);
+    return square;
+}
+
 Mesh* object2D::CreateCircle(
     const std::string& name,
     glm::vec3 center,

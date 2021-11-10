@@ -1,7 +1,8 @@
 #pragma once
 
 #include "components/simple_scene.h"
-
+#include <vector>
+using namespace std;
 
 namespace m1
 {
@@ -71,5 +72,11 @@ namespace m1
             x_o2, y_o2, sx_o2, sy_o2,
             x_o3, y_o3, sx_o3, sy_o3,
             x_o4, y_o4, sx_o4, sy_o4;*/
+        vector<float> x_pr, y_pr, rad_pr, x_dir_pr, y_dir_pr, dist_x_pr, dist_y_pr;
+        vector<bool> pr_status;
+        float proj_cooldown;
+        vector<float> x_en, y_en, rad_en, en_speed;
+        vector<bool> en_status;
+        float en_cooldown;
     };
 }   // namespace m1

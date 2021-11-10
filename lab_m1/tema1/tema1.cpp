@@ -78,7 +78,7 @@ void Tema1::Init()
     glm::vec3 center3 = glm::vec3(0, 0, 10);
     glm::vec3 corner_map = glm::vec3(-10, 0, -10);
 
-    length = body_rad = 0.99f;
+    length = body_rad = 1;
     float map_length = 40;
 
     // map
@@ -90,11 +90,11 @@ void Tema1::Init()
     AddMeshToList(square2);
 
     // projectiles
-    Mesh* square3 = object2D::CreateSquare("square3", center2, length, glm::vec3(0, 0, 0), true);
+    Mesh* square3 = object2D::CreateSquareCentered("square3", center2, length, glm::vec3(0, 0, 0), true);
     AddMeshToList(square3);
 
     // enemies
-    Mesh* square4 = object2D::CreateSquare("square4", center2, length, glm::vec3(1, 0, 0), true);
+    Mesh* square4 = object2D::CreateSquareCentered("square4", center2, length, glm::vec3(1, 0, 0), true);
     AddMeshToList(square4);
 
     // healthbar
@@ -145,9 +145,16 @@ void Tema1::Init()
     sx_o4 = 30;
     sy_o4 = 2;
 
+    // healthbar
     x_hb = logicSpace.x - 7;
     y_hb = logicSpace.height - 2;
     health = 10;
+
+    // projectile
+    proj_cooldown = 0;
+
+    // enemy
+    en_cooldown = 500;
 }
 
 // 2D visualization matrix
@@ -226,6 +233,84 @@ void Tema1::Update(float deltaTimeSeconds)
     visMatrix *= VisualizationTransf2DUnif(logicSpace, viewSpace);
     DrawScene(visMatrix);
 
+    // projectile
+    for (int i = 0; i < x_pr.size(); i++) {
+        if (pr_status[i]) {
+            if (x_pr[i] + deltaTimeSeconds * x_dir_pr[i] + 0.15 <= logicSpace.width + 9 &&
+                x_pr[i] + deltaTimeSeconds * x_dir_pr[i] - 0.15 >= -9 &&
+                ok_x(x_pr[i] + deltaTimeSeconds * x_dir_pr[i])) {
+                x_pr[i] += deltaTimeSeconds * x_dir_pr[i];
+                dist_x_pr[i] += deltaTimeSeconds * x_dir_pr[i];
+            }
+            else {
+                pr_status[i] = false;
+            }
+
+            if (y_pr[i] + deltaTimeSeconds * y_dir_pr[i] + 0.15 <= viewSpace.height / logicSpace.height + 3 &&
+                y_pr[i] + deltaTimeSeconds * y_dir_pr[i] - 0.15 >= 1 &&
+                ok_y(y_pr[i] + deltaTimeSeconds * y_dir_pr[i])) {
+                    y_pr[i] += deltaTimeSeconds * y_dir_pr[i];
+                    dist_y_pr[i] += deltaTimeSeconds * y_dir_pr[i];
+            }
+            else {
+                pr_status[i] = false;
+            }
+        }
+    }
+    proj_cooldown--;
+
+    // enemy
+    en_cooldown--;
+    for (int i = 0; i < x_en.size(); i++) {
+        if (en_status[i]) {
+            if (y_char > y_en[i]) {
+                rad_en[i] = -atan((x_char - x_en[i]) / (y_char - y_en[i]));
+            }
+            else if (y_char < y_en[i]) {
+                rad_en[i] = 3.1415 - atan((x_char - x_en[i]) / (y_char - y_en[i]));
+            }
+            else if (x_char > x_en[i]) {
+                rad_en[i] = -3.1415 / 2;
+            }
+            else if (x_char < x_en[i]) {
+                rad_en[i] = 3.1415 / 2;
+            }
+            x_en[i] += (x_char - x_en[i]) * deltaTimeSeconds * en_speed[i];
+            y_en[i] += (y_char - y_en[i]) * deltaTimeSeconds * en_speed[i];
+
+            if (x_char + 1 >= x_en[i] - 1 && x_char - 1 <= x_en[i] + 1 &&
+                y_char + 1 >= y_en[i] - 1 && y_char - 1 <= y_en[i] + 1) {
+                en_status[i] = false;
+                health--;
+            }
+        }
+    }
+    if (en_cooldown <= 0) {
+        int i = x_en.size();
+        float r = ((float) rand() * (logicSpace.width + 15)) / RAND_MAX - 8;
+        x_en.push_back(r);
+        r = ((float)rand() * viewSpace.height / logicSpace.height) / RAND_MAX + 2;
+        y_en.push_back(r);
+        en_status.push_back(true);
+
+        r = ((float)rand() * 2) / RAND_MAX;
+        en_speed.push_back(r);
+        
+        if (y_char > y_en[i]) {
+            rad_en.push_back(-atan((x_char - x_en[i]) / (y_char - y_en[i])));
+        }
+        else if (y_char < y_en[i]) {
+            rad_en.push_back(3.1415 - atan((x_char - x_en[i]) / (y_char - y_en[i])));
+        }
+        else if (x_char > x_en[i]) {
+            rad_en.push_back(-3.1415 / 2);
+        }
+        else if (x_char < x_en[i]) {
+            rad_en.push_back(3.1415 / 2);
+        }
+        en_cooldown = 500;
+    }
+
 }
 
 
@@ -271,16 +356,27 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
     modelMatrix = visMatrix * transform2D::Translate(x_o4, y_o4) * transform2D::Scale(sx_o4, sy_o4);
     RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
 
-    // TODO proiectil
-    // modelMatrix = visMatrix * transform2D::Translate(x_proj, y_proj) * transform2D::Scale(0.3, 0.3);
-    // RenderMesh2D(meshes["square3"], shaders["VertexColor"], modelMatrix);
+    // TODO projectile
+    for (int i = 0; i < x_pr.size(); i++) {
+        if (pr_status[i]) {
+            modelMatrix = visMatrix * transform2D::Translate(x_pr[i], y_pr[i]) * transform2D::Rotate(rad_pr[i]) * transform2D::Translate(0, 1) * transform2D::Scale(0.3, 0.3);
+            RenderMesh2D(meshes["square3"], shaders["VertexColor"], modelMatrix);
+        }
+    }
 
-    // TODO inamic
-    // modelMatrix = visMatrix * transform2D::Translate(20.8, 12) * transform2D::Scale(0.3, 0.3);
-    // RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
+    // TODO enemy
+    for (int i = 0; i < x_en.size(); i++) {
+        if (en_status[i]) {
+            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Translate(1, 1) * transform2D::Scale(0.3, 0.3);
+            RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
 
-    // modelMatrix = visMatrix * transform2D::Translate(20, 10) * transform2D::Scale(2, 2);
-    // RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
+            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Translate(-1, 1) * transform2D::Scale(0.3, 0.3);
+            RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
+
+            modelMatrix = visMatrix * transform2D::Translate(x_en[i], y_en[i]) * transform2D::Rotate(rad_en[i]) * transform2D::Scale(2, 2);
+            RenderMesh2D(meshes["square4"], shaders["VertexColor"], modelMatrix);
+        }
+    }
 
     // healthbar
     modelMatrix = visMatrix * transform2D::Translate(x_hb, y_hb) * transform2D::Scale(10, 1.5);
@@ -392,8 +488,14 @@ void Tema1::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
     if (y_mouse > y_char) {
         rad_char = -atan((x_mouse - x_char) / (y_mouse - y_char));
     }
-    else {
+    else if (y_mouse < y_char) {
         rad_char = 3.1415 - atan((x_mouse - x_char) / (y_mouse - y_char));
+    }
+    else if (x_mouse > x_char) {
+        rad_char = -3.1415 / 2;
+    }
+    else if (x_mouse < x_char) {
+        rad_char = 3.1415 / 2;
     }
     
 }
@@ -402,6 +504,23 @@ void Tema1::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 void Tema1::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)
 {
     // Add mouse button press event
+    if (IS_BIT_SET(button, GLFW_MOUSE_BUTTON_LEFT)) {
+        if (proj_cooldown <= 0) {
+            proj_cooldown = 100;
+
+            float x_mouse = logicSpace.x + ((float)mouseX) * logicSpace.width / viewSpace.width;
+            float y_mouse = logicSpace.height + logicSpace.y - mouseY * logicSpace.height / viewSpace.height;
+
+            x_pr.push_back(x_char);
+            y_pr.push_back(y_char);
+            rad_pr.push_back(rad_char);
+            x_dir_pr.push_back(x_mouse - x_char);
+            y_dir_pr.push_back(y_mouse - y_char);
+            pr_status.push_back(true);
+            dist_x_pr.push_back(0);
+            dist_y_pr.push_back(0);
+        }
+    }
 }
 
 
