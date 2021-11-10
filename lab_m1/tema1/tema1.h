@@ -4,6 +4,8 @@
 #include <vector>
 using namespace std;
 
+#define MAX_PROJ_DIST 50
+
 namespace m1
 {
     class Tema1 : public gfxc::SimpleScene

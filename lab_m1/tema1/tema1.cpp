@@ -255,6 +255,10 @@ void Tema1::Update(float deltaTimeSeconds)
             else {
                 pr_status[i] = false;
             }
+
+            if (dist_x_pr[i] * dist_x_pr[i] + dist_y_pr[i] * dist_y_pr[i] >= MAX_PROJ_DIST) {
+                pr_status[i] = false;
+            }
         }
     }
     proj_cooldown--;
