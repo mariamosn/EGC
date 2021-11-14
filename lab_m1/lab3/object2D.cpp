@@ -101,7 +101,6 @@ Mesh* object2D::CreateCircle(
         float x = radius * cosf(theta);//calculate the x component
         float y = radius * sinf(theta);//calculate the y component
 
-        // glVertex2f(x + cx, y + cy);//output vertex
         vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), color));
     }
 

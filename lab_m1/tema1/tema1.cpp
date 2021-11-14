@@ -78,18 +78,21 @@ void Tema1::Init()
     Mesh* square1 = object2D::CreateSquare("square1", corner_map, map_length, glm::vec3(1, 1, 0.5), true);
     AddMeshToList(square1);
 
-    // obstacle
-    Mesh* square2 = object2D::CreateSquare("square2", corner, length, glm::vec3(0.75, 0.75, 1), true);
-    AddMeshToList(square2);
 
     // projectiles
     len_pr = 0.3;
     Mesh* square3 = object2D::CreateSquareCentered("square3", center2, len_pr, glm::vec3(0, 0, 0), true);
     AddMeshToList(square3);
 
+    proj_cooldown = 0;
+
+
     // enemies
     Mesh* square4 = object2D::CreateSquareCentered("square4", center2, len_en, glm::vec3(1, 0, 0), true);
     AddMeshToList(square4);
+
+    en_cooldown = 500;
+
 
     // healthbar
     Mesh* square5 = object2D::CreateSquare("square5", center3, length, glm::vec3(1, 0, 0.75), false);
@@ -98,12 +101,24 @@ void Tema1::Init()
     Mesh* square6 = object2D::CreateSquare("square6", center3, length, glm::vec3(1, 0, 0.75), true);
     AddMeshToList(square6);
 
+    x_hb = logicSpace.x - 7;
+    y_hb = logicSpace.height - 2;
+    health = 10;
+
+
     // score
     Mesh* square7 = object2D::CreateSquare("square7", center3, length, glm::vec3(0, 0, 0.75), false);
     AddMeshToList(square7);
 
     Mesh* square8 = object2D::CreateSquare("square8", center3, length, glm::vec3(0, 0, 0.75), true);
     AddMeshToList(square8);
+
+    score = 0;
+    x_sc = logicSpace.x - 7;
+    y_sc = logicSpace.height - 4;
+
+
+    // character
 
     // eyes
     Mesh* circle2 = object2D::CreateCircle("circle2", center2, length, glm::vec3(0, 1, 1));
@@ -117,14 +132,22 @@ void Tema1::Init()
     Mesh* triangle = object2D::CreateTriangle("triangle", center1, length, glm::vec3(0.5, 1, 0.5));
     AddMeshToList(triangle);
 
+    x_char = logicSpace.width / 2;
+    y_char = logicSpace.height / 2;
+    rad_char = 0;
+
+
     // healer bonus
     Mesh* circle3 = object2D::CreateCircle("circle3", corner, body_rad / 2, glm::vec3(0, 0.5, 0.2));
     AddMeshToList(circle3);
 
-    // character
-    x_char = logicSpace.width / 2;
-    y_char = logicSpace.height / 2;
-    rad_char = 0;
+    heal_time = 500;
+    x_heal = y_heal = 25;
+
+
+    // obstacles
+    Mesh* square2 = object2D::CreateSquare("square2", corner, length, glm::vec3(0.75, 0.75, 1), true);
+    AddMeshToList(square2);
 
     // obstracle 1
     x_o.push_back(1);
@@ -150,25 +173,6 @@ void Tema1::Init()
     sx_o.push_back(30);
     sy_o.push_back(2);
 
-    // healthbar
-    x_hb = logicSpace.x - 7;
-    y_hb = logicSpace.height - 2;
-    health = 10;
-
-    // score
-    score = 0;
-    x_sc = logicSpace.x - 7;
-    y_sc = logicSpace.height - 4;
-
-    // projectile
-    proj_cooldown = 0;
-
-    // enemy
-    en_cooldown = 500;
-
-    // healer bonus
-    heal_time = 500;
-    x_heal = y_heal = 25;
 }
 
 // 2D visualization matrix
@@ -329,6 +333,7 @@ void Tema1::Update(float deltaTimeSeconds)
         en_cooldown = 500;
     }
 
+    // game status
     if (health <= 0) {
         cout << "YOU LOST!\n";
         score = 0;
@@ -389,11 +394,13 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
     modelMatrix = visMatrix;
     RenderMesh2D(meshes["square1"], shaders["VertexColor"], modelMatrix);
 
+
     // obstacles
     for (int i = 0; i < x_o.size(); i++) {
         modelMatrix = visMatrix * transform2D::Translate(x_o[i], y_o[i]) * transform2D::Scale(sx_o[i], sy_o[i]);
         RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
     }
+
 
     // projectile
     for (int i = 0; i < x_pr.size(); i++) {
@@ -402,6 +409,7 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
             RenderMesh2D(meshes["square3"], shaders["VertexColor"], modelMatrix);
         }
     }
+
 
     // enemy
     for (int i = 0; i < x_en.size(); i++) {
@@ -417,6 +425,7 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
         }
     }
 
+
     // healthbar
     modelMatrix = visMatrix * transform2D::Translate(x_hb, y_hb) * transform2D::Scale(10, 1.5);
     RenderMesh2D(meshes["square5"], shaders["VertexColor"], modelMatrix);
@@ -424,12 +433,14 @@ void Tema1::DrawScene(glm::mat3 visMatrix)
     modelMatrix = visMatrix * transform2D::Translate(x_hb, y_hb) * transform2D::Scale(health, 1.5);
     RenderMesh2D(meshes["square6"], shaders["VertexColor"], modelMatrix);
 
+
     // score
     modelMatrix = visMatrix * transform2D::Translate(x_sc, y_sc) * transform2D::Scale(10, 1.5);
     RenderMesh2D(meshes["square7"], shaders["VertexColor"], modelMatrix);
 
     modelMatrix = visMatrix * transform2D::Translate(x_sc, y_sc) * transform2D::Scale(score, 1.5);
     RenderMesh2D(meshes["square8"], shaders["VertexColor"], modelMatrix);
+
 
     // healer bonus
     modelMatrix = visMatrix * transform2D::Translate(x_heal, y_heal);
@@ -456,7 +467,8 @@ void Tema1::OnInputUpdate(float deltaTime, int mods)
         }
     }
     if (window->KeyHold(GLFW_KEY_A)) {
-        if (x_char - deltaTime * speed - body_rad >= -10 && ok_obstacle(x_char - deltaTime * speed, y_char, body_rad)) {
+        if (x_char - deltaTime * speed - body_rad >= -10 &&
+            ok_obstacle(x_char - deltaTime * speed, y_char, body_rad)) {
             x_char -= deltaTime * speed;
             x_hb -= deltaTime * speed;
             x_sc -= deltaTime * speed;
@@ -464,7 +476,8 @@ void Tema1::OnInputUpdate(float deltaTime, int mods)
         }
     }
     if (window->KeyHold(GLFW_KEY_S)) {
-        if (y_char - deltaTime * speed - body_rad >= 0 && ok_obstacle(x_char, y_char - deltaTime * speed, body_rad)) {
+        if (y_char - deltaTime * speed - body_rad >= 0 &&
+            ok_obstacle(x_char, y_char - deltaTime * speed, body_rad)) {
             y_char -= deltaTime * speed;
             y_hb -= deltaTime * speed;
             y_sc -= deltaTime * speed;
@@ -472,7 +485,8 @@ void Tema1::OnInputUpdate(float deltaTime, int mods)
         }
     }
     if (window->KeyHold(GLFW_KEY_D)) {
-        if (x_char + deltaTime * speed + body_rad <= logicSpace.width + 10 && ok_obstacle(x_char + deltaTime * speed, y_char, body_rad)) {
+        if (x_char + deltaTime * speed + body_rad <= logicSpace.width + 10 &&
+            ok_obstacle(x_char + deltaTime * speed, y_char, body_rad)) {
             x_char += deltaTime * speed;
             x_hb += deltaTime * speed;
             x_sc += deltaTime * speed;
