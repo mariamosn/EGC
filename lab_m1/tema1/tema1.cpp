@@ -10,12 +10,6 @@
 using namespace std;
 using namespace m1;
 
-float x_o1, y_o1, sx_o1, sy_o1,
-        x_o2, y_o2, sx_o2, sy_o2,
-        x_o3, y_o3, sx_o3, sy_o3,
-        x_o4, y_o4, sx_o4, sy_o4,
-        length;
-
 /*
  *  To find out more about `FrameStart`, `Update`, `FrameEnd`
  *  and the order in which they are called, see `world.cpp`.
@@ -245,9 +239,6 @@ void Tema1::Update(float deltaTimeSeconds)
     viewSpace = ViewportSpace(0, 0, resolution.x, resolution.y);
     SetViewportArea(viewSpace, glm::vec3(0), true);
 
-    vx_char = x_char;
-    vy_char = y_char + length / 2;
-
     // Compute uniform 2D visualization matrix
     visMatrix = glm::mat3(1);
     visMatrix *= VisualizationTransf2DUnif(logicSpace, viewSpace);
@@ -256,18 +247,19 @@ void Tema1::Update(float deltaTimeSeconds)
     // projectile
     for (int i = 0; i < x_pr.size(); i++) {
         if (pr_status[i]) {
-            if (x_pr[i] + deltaTimeSeconds * x_dir_pr[i] + 0.15 <= logicSpace.width + 9 &&
-                x_pr[i] + deltaTimeSeconds * x_dir_pr[i] - 0.15 >= -9 &&
+            if (x_pr[i] + deltaTimeSeconds * x_dir_pr[i] + len_pr / 2 <= logicSpace.width + 9.3 &&
+                x_pr[i] + deltaTimeSeconds * x_dir_pr[i] - len_pr / 2 >= -9.3 &&
                 ok_obstacle(x_pr[i] + deltaTimeSeconds * x_dir_pr[i], y_pr[i], len_pr / 2)) {
                 x_pr[i] += deltaTimeSeconds * x_dir_pr[i];
                 dist_x_pr[i] += deltaTimeSeconds * x_dir_pr[i];
             }
             else {
                 pr_status[i] = false;
+                cout << x_pr[i] << ' ' << y_pr[i] << endl;
             }
 
-            if (y_pr[i] + deltaTimeSeconds * y_dir_pr[i] + 0.15 <= viewSpace.height / logicSpace.height + 3 &&
-                y_pr[i] + deltaTimeSeconds * y_dir_pr[i] - 0.15 >= 1 &&
+            if (y_pr[i] + deltaTimeSeconds * y_dir_pr[i] + len_pr / 2 <= viewSpace.height / logicSpace.height + 3.3 &&
+                y_pr[i] + deltaTimeSeconds * y_dir_pr[i] - len_pr / 2 >= 0.7 &&
                 ok_obstacle(x_pr[i], y_pr[i] + deltaTimeSeconds * y_dir_pr[i], len_pr / 2)) {
                     y_pr[i] += deltaTimeSeconds * y_dir_pr[i];
                     dist_y_pr[i] += deltaTimeSeconds * y_dir_pr[i];
@@ -358,7 +350,10 @@ void Tema1::Update(float deltaTimeSeconds)
 
     if (x_char + body_rad >= x_heal - body_rad / 2 && x_char - body_rad <= x_heal + body_rad / 2 &&
         y_char + body_rad >= y_heal - body_rad / 2 && y_char - body_rad <= y_heal + body_rad / 2) {
-        health = 10;
+        health += 2;
+        if (health > 10) {
+            health = 10;
+        }
         heal_time = 0;
     }
 
@@ -452,7 +447,8 @@ void Tema1::OnInputUpdate(float deltaTime, int mods)
 {
     float speed = 10;
     if (window->KeyHold(GLFW_KEY_W)) {
-        if (y_char + deltaTime * speed <=  viewSpace.height / logicSpace.height + 3 && ok_obstacle(x_char, y_char + deltaTime * speed, body_rad)) {
+        if (y_char + deltaTime * speed <=  viewSpace.height / logicSpace.height + 3 &&
+            ok_obstacle(x_char, y_char + deltaTime * speed, body_rad)) {
             y_char += deltaTime * speed;
             y_hb += deltaTime * speed;
             y_sc += deltaTime * speed;
@@ -483,53 +479,11 @@ void Tema1::OnInputUpdate(float deltaTime, int mods)
             logicSpace.x += deltaTime * speed;
         }
     }
-    /*
-    // TODO(student): Zoom in and zoom out logic window with Z and X
-    if (window->KeyHold(GLFW_KEY_Z)) {
-        logicSpace.height -= deltaTime * speed;
-        logicSpace.width -= deltaTime * speed;
-    }
-    if (window->KeyHold(GLFW_KEY_X)) {
-        logicSpace.height += deltaTime * speed;
-        logicSpace.width += deltaTime * speed;
-    }
-    */
-
-    // TODO de sters la final
-    if (window->KeyHold(GLFW_KEY_Z))
-    {
-        GLfloat zoomAmount = deltaTime * 5;
-
-        logicSpace.x += logicSpace.width / 2;
-        logicSpace.y += logicSpace.height / 2;
-
-        logicSpace.width += zoomAmount;
-        logicSpace.height += zoomAmount;
-
-        logicSpace.x -= logicSpace.width / 2;
-        logicSpace.y -= logicSpace.height / 2;
-    }
-    if (window->KeyHold(GLFW_KEY_X))
-    {
-        GLfloat zoomAmount = deltaTime * 5;
-
-        logicSpace.x += logicSpace.width / 2;
-        logicSpace.y += logicSpace.height / 2;
-
-        logicSpace.width -= zoomAmount;
-        logicSpace.height -= zoomAmount;
-
-        logicSpace.x -= logicSpace.width / 2;
-        logicSpace.y -= logicSpace.height / 2;
-    }
 }
 
 
 void Tema1::OnKeyPress(int key, int mods)
 {
-    if (key == GLFW_KEY_H && health > 0) {
-        health--;
-    }
 }
 
 

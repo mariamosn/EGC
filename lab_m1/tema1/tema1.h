@@ -68,7 +68,7 @@ namespace m1
         ViewportSpace viewSpace;
         LogicSpace logicSpace;
         glm::mat3 modelMatrix, visMatrix;
-        float x_char, y_char, rad_char, vx_char, vy_char;
+        float x_char, y_char, rad_char, length;
         float body_rad;
         float x_proj, y_proj;
         float x_hb, y_hb, health;
