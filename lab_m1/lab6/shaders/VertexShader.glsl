@@ -3,9 +3,11 @@
 // Input
 // TODO(student): Get vertex attributes from each location
 layout(location = 0) in vec3 v_position;
-layout(location = 1) in vec3 v_normal;
+// layout(location = 1) in vec3 v_normal;
 layout(location = 2) in vec2 v_texture;
-layout(location = 3) in vec3 v_color;
+// layout(location = 3) in vec3 v_color;
+layout(location = 3) in vec3 v_normal;
+layout(location = 1) in vec3 v_color;
 
 // Uniform properties
 uniform mat4 Model;
