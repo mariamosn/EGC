@@ -57,8 +57,8 @@ void Lab7::Init()
     {
         lightPosition = glm::vec3(0, 1, 1);
         materialShininess = 30;
-        materialKd = 0.5;
-        materialKs = 0.5;
+        materialKd = 0.7;
+        materialKs = 0.7;
     }
 }
 
