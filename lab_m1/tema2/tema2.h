@@ -3,6 +3,12 @@
 #include "components/simple_scene.h"
 #include "lab_m1/tema2/lab_camera.h"
 
+#define N_MAZE 21
+#define M_MAZE 21
+#define FREE 1
+#define WALL 0
+#define ENEMY 2
+
 
 namespace m1
 {
@@ -22,6 +28,8 @@ namespace m1
         void RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix) override;
         void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
         Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
+        void BuildMaze();
+        bool WallHit(float x, float y);
 
         void OnInputUpdate(float deltaTime, int mods) override;
         void OnKeyPress(int key, int mods) override;
@@ -44,5 +52,11 @@ namespace m1
         float z_near = 0.01;
         float z_far = 200;
         char projectionType;
+
+        // character
+        float x_char, y_char, z_char, rad_char;
+
+        // maze
+        int maze[N_MAZE][M_MAZE] = { WALL };
     };
 }   // namespace m1

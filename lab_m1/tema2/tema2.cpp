@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <algorithm>
+#include <random>
 
 using namespace std;
 using namespace m1;
@@ -102,6 +104,20 @@ void Tema2::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+
+    BuildMaze();
+
+    rad_char = 0;
+    x_char = -1;
+    for (int i = 0; i < N_MAZE && x_char == -1; i++) {
+        for (int j = 0; j < M_MAZE && x_char == -1; j++) {
+            if (maze[i][j] == FREE) {
+                x_char = i;
+                y_char = 0;
+                z_char = j;
+            }
+        }
+    }
 }
 
 Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
@@ -189,101 +205,131 @@ void Tema2::FrameStart()
 
 void Tema2::Update(float deltaTimeSeconds)
 {
+    // character
     // head
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2.5, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
     // body
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1.75, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 1, 0.5));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
     // shoulders
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2.15, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f, 0.2, 0.2));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
     // arms
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.4, 1.875, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 0.75, 0.2));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.4, 1.875, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 0.75, 0.2));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
     // hands
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.4, 1.375, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.4, 1.375, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
     // legs
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.15, 0.75, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 1, 0.25));
         RenderMesh(meshes["box"], shaders["BlueShader"], modelMatrix);
     }
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.15, 0.75, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 1, 0.25));
         RenderMesh(meshes["box"], shaders["BlueShader"], modelMatrix);
     }
     // feet
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.15, 0.125, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.15, 0.125, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
+
+    //////////////////////////////////////////////////////////////////////
+
+    // maze
+    for (int i = 0; i < N_MAZE; i++) {
+        for (int j = 0; j < N_MAZE; j++) {
+            if (maze[i][j] == WALL) {
+                glm::mat4 modelMatrix = glm::mat4(1);
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
+                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(1));
+                RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
+            }
+        }
+    }
+
+
+
     /*
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -376,6 +422,111 @@ void Tema2::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelM
     glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
 }
 
+// using Aldous-Broder
+void Tema2::BuildMaze() {
+    auto rng = std::default_random_engine{};
+    int state;
+    vector<pair<int, int>> neighbors;
+    int x = rand() % N_MAZE;
+    int y = rand() % M_MAZE;
+    if (x % 2 == 0) {
+        x++;
+        if (x >= N_MAZE) {
+            x -= 2;
+        }
+    }
+    if (y % 2 == 0) {
+        y++;
+        if (y >= M_MAZE) {
+            y -= 2;
+        }
+    }
+
+    int remaining = (N_MAZE / 2) * (M_MAZE / 2) - 1;
+
+    maze[x][y] = FREE;
+
+    while (remaining > 0) {
+        neighbors.clear();
+        state = WALL;
+
+        if (x > 1 && maze[x - 2][y] == state) {
+            neighbors.push_back(make_pair(x - 2, y));
+        }
+        if (x < N_MAZE - 2 && maze[x + 2][y] == state) {
+            neighbors.push_back(make_pair(x + 2, y));
+        }
+        if (y > 1 && maze[x][y - 2] == state) {
+            neighbors.push_back(make_pair(x, y - 2));
+        }
+        if (y < M_MAZE - 2 && maze[x][y + 2] == state) {
+            neighbors.push_back(make_pair(x, y + 2));
+        }
+        std::shuffle(std::begin(neighbors), std::end(neighbors), rng);
+
+
+
+        if (neighbors.size() == 0) {
+            neighbors.clear();
+            state = FREE;
+
+            if (x > 1 && maze[x - 2][y] == state) {
+                neighbors.push_back(make_pair(x - 2, y));
+            }
+            if (x < N_MAZE - 2 && maze[x + 2][y] == state) {
+                neighbors.push_back(make_pair(x + 2, y));
+            }
+            if (y > 1 && maze[x][y - 2] == state) {
+                neighbors.push_back(make_pair(x, y - 2));
+            }
+            if (y < M_MAZE - 2 && maze[x][y + 2] == state) {
+                neighbors.push_back(make_pair(x, y + 2));
+            }
+            std::shuffle(std::begin(neighbors), std::end(neighbors), rng);
+
+
+
+            int index = rand() % neighbors.size();
+            x = neighbors[index].first;
+            y = neighbors[index].second;
+            continue;
+        }
+
+        for (int i = 0; i < neighbors.size(); i++) {
+            int neigh_x = neighbors[i].first;
+            int neigh_y = neighbors[i].second;
+            if (maze[neigh_x][neigh_y] != FREE) {
+                maze[(neigh_x + x) / 2][(neigh_y + y) / 2] = FREE;
+                maze[neigh_x][neigh_y] = FREE;
+                remaining--;
+                x = neigh_x;
+                y = neigh_y;
+                break;
+            }
+        }
+    }
+
+    for (int j = 0; j < M_MAZE; j++) {
+        if (maze[N_MAZE - 2][j] == FREE) {
+            maze[N_MAZE - 1][j] = FREE;
+            break;
+        }
+    }
+}
+
+bool Tema2::WallHit(float x, float y) {
+    for (int i = 0; i < N_MAZE; i++) {
+        for (int j = 0; j < M_MAZE; j++) {
+            if (maze[i][j] == WALL &&
+                i + 0.4 >= x - 0.4 && i - 0.4 <= x + 0.4 &&
+                j - 0.4 <= y + 0.4 && j + 0.4 >= y - 0.4) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 /*
  *  These are callback functions. To find more about callbacks and
@@ -385,7 +536,7 @@ void Tema2::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelM
 
 void Tema2::OnInputUpdate(float deltaTime, int mods)
 {
-    float cameraSpeed = 2.0f;
+    float cameraSpeed = 1;
     // move the camera only if MOUSE_RIGHT button is pressed
     if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
     {
@@ -443,6 +594,35 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         right += deltaTime;
         left -= deltaTime;
     }
+
+    // character movement
+    if (window->KeyHold(GLFW_KEY_W) && !WallHit(x_char, z_char - deltaTime)) {
+        z_char -= deltaTime;
+        rad_char = 0;
+        // TODO(student): Translate the camera forward
+        camera->TranslateForward(cameraSpeed * deltaTime);
+    }
+
+    if (window->KeyHold(GLFW_KEY_A) && !WallHit(x_char - deltaTime, z_char)) {
+        x_char -= deltaTime;
+        rad_char = 90;
+        // TODO(student): Translate the camera to the left
+        camera->TranslateRight(-cameraSpeed * deltaTime);
+    }
+
+    if (window->KeyHold(GLFW_KEY_S) && !WallHit(x_char, z_char + deltaTime)) {
+        z_char += deltaTime;
+        rad_char = 0;
+        // TODO(student): Translate the camera backward
+        camera->TranslateForward(-cameraSpeed * deltaTime);
+    }
+
+    if (window->KeyHold(GLFW_KEY_D) && !WallHit(x_char + deltaTime, z_char)) {
+        x_char += deltaTime;
+        rad_char = 90;
+        // TODO(student): Translate the camera to the right
+        camera->TranslateRight(cameraSpeed * deltaTime);
+    }
 }
 
 
@@ -477,30 +657,25 @@ void Tema2::OnKeyRelease(int key, int mods)
 void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 {
     // Add mouse move event
+    float sensivityOX = 0.001f;
+    float sensivityOY = 0.001f;
 
-    if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-    {
-        float sensivityOX = 0.001f;
-        float sensivityOY = 0.001f;
+    if (window->GetSpecialKeyState() == 0) {
+        renderCameraTarget = false;
+        // TODO(student): Rotate the camera in first-person mode around
+        // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
+        // variables for setting up the rotation speed.
+        camera->RotateFirstPerson_OX(-sensivityOX * deltaY);
+        camera->RotateFirstPerson_OY(-sensivityOY * deltaX);
 
-        if (window->GetSpecialKeyState() == 0) {
-            renderCameraTarget = false;
-            // TODO(student): Rotate the camera in first-person mode around
-            // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-            // variables for setting up the rotation speed.
-            camera->RotateFirstPerson_OX(-sensivityOX * deltaY);
-            camera->RotateFirstPerson_OY(-sensivityOY * deltaX);
-
-        }
-
-        if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
-            renderCameraTarget = true;
-            // TODO(student): Rotate the camera in third-person mode around
-            // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-            // variables for setting up the rotation speed.
-            camera->RotateThirdPerson_OX(-sensivityOX * deltaY);
-            camera->RotateThirdPerson_OY(-sensivityOY * deltaX);
-        }
+    }
+    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
+        renderCameraTarget = true;
+        // TODO(student): Rotate the camera in third-person mode around
+        // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
+        // variables for setting up the rotation speed.
+        camera->RotateThirdPerson_OX(-sensivityOX * deltaY);
+        camera->RotateThirdPerson_OY(-sensivityOY * deltaX);
     }
 }
 
