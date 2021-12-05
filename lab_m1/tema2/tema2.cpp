@@ -210,7 +210,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2.5, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
@@ -220,7 +220,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1.75, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 1, 0.5));
@@ -230,7 +230,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2.15, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f, 0.2, 0.2));
@@ -240,7 +240,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.4, 1.875, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 0.75, 0.2));
@@ -249,7 +249,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.4, 1.875, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 0.75, 0.2));
@@ -259,7 +259,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.4, 1.375, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
@@ -268,7 +268,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.4, 1.375, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
@@ -278,7 +278,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.15, 0.75, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 1, 0.25));
@@ -287,7 +287,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.15, 0.75, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 1, 0.25));
@@ -297,7 +297,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.15, 0.125, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
@@ -306,7 +306,7 @@ void Tema2::Update(float deltaTimeSeconds)
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char, y_char, z_char));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.15, 0.125, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
@@ -518,8 +518,8 @@ bool Tema2::WallHit(float x, float y) {
     for (int i = 0; i < N_MAZE; i++) {
         for (int j = 0; j < M_MAZE; j++) {
             if (maze[i][j] == WALL &&
-                i + 0.4 >= x - 0.4 && i - 0.4 <= x + 0.4 &&
-                j - 0.4 <= y + 0.4 && j + 0.4 >= y - 0.4) {
+                i + 0.5 >= x - 0.125 && i - 0.5 <= x + 0.125 &&
+                j - 0.5 <= y + 0.125 && j + 0.5 >= y - 0.125) {
                 return true;
             }
         }
