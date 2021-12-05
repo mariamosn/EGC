@@ -58,5 +58,8 @@ namespace m1
 
         // maze
         int maze[N_MAZE][M_MAZE] = { WALL };
+
+        // enemy
+        float x_enemy, y_enemy;
     };
 }   // namespace m1

@@ -118,6 +118,9 @@ void Tema2::Init()
             }
         }
     }
+
+    x_enemy = 0;
+    y_enemy = 0;
 }
 
 Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
@@ -325,9 +328,31 @@ void Tema2::Update(float deltaTimeSeconds)
                 modelMatrix = glm::scale(modelMatrix, glm::vec3(1));
                 RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
             }
+            else if (maze[i][j] == ENEMY) {
+                glm::mat4 modelMatrix = glm::mat4(1);
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(x_enemy, 0, y_enemy));
+                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.375, 0, -0.375));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25, 1, 0.25));
+                RenderMesh(meshes["box"], shaders["VertexNormal"], modelMatrix);
+            }
         }
     }
 
+    // TODO : de corectat
+    if (x_enemy <= -0.375 && y_enemy < 0.375) {
+        y_enemy += deltaTimeSeconds;
+    }
+    else if (y_enemy >= 0.375 && x_enemy < 0.375) {
+        x_enemy += deltaTimeSeconds;
+    }
+    else if (x_enemy >= 0.375 && y_enemy > -0.375) {
+        y_enemy -= deltaTimeSeconds;
+    }
+    else {
+        x_enemy -= deltaTimeSeconds;
+    }
 
 
     /*
@@ -503,6 +528,14 @@ void Tema2::BuildMaze() {
                 y = neigh_y;
                 break;
             }
+        }
+    }
+
+    for (int i = 1; i <= 10; i++) {
+        int enemy_x = rand() % N_MAZE;
+        int enemy_y = rand() % M_MAZE;
+        if (enemy_x != 0 && enemy_x != N_MAZE - 1 && enemy_y != 0 && enemy_y != M_MAZE - 1) {
+            maze[enemy_x][enemy_y] = ENEMY;
         }
     }
 
