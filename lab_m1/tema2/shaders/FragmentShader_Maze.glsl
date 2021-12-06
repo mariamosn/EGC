@@ -16,8 +16,8 @@ layout(location = 2) out vec3 out_texture;
 void main()
 {
     // TODO(student): Write pixel out color
-    out_color = vec4(0, 0, 0.5, 1);
-    // out_color = vec4(abs(frag_normal), 1);
+    // out_color = vec4(frag_color, 1);
+    out_color = vec4(abs(frag_normal), 1);
     out_normal = vec4(frag_normal, 1);
     out_texture = vec3(frag_texture, 1);
 

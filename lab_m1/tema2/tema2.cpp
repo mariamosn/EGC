@@ -104,9 +104,25 @@ void Tema2::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("MazeShader");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "VertexShader_Maze.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "FragmentShader_Maze.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
+    {
+        Shader* shader = new Shader("EnemyShader");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "VertexShader_Enemy.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "FragmentShader_Enemy.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     BuildMaze();
 
+    health = HEALTH_MAX;
+    health_cooldown = 0;
     rad_char = 0;
     x_char = -1;
     for (int i = 0; i < N_MAZE && x_char == -1; i++) {
@@ -331,13 +347,30 @@ void Tema2::Update(float deltaTimeSeconds)
             }
             else if (maze[i][j] == ENEMY) {
                 {
+                    float x_center_enemy = -0.375 + x_enemy + i;
+                    float y_center_enemy = -0.375 + y_enemy + j;
+
                     glm::mat4 modelMatrix = glm::mat4(1);
-                    modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
-                    modelMatrix = glm::translate(modelMatrix, glm::vec3(x_enemy, 0, y_enemy));
-                    // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
-                    modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.375, 0, -0.375));
+                    
+                    // modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
+                    // modelMatrix = glm::translate(modelMatrix, glm::vec3(x_enemy, 0, y_enemy));
+                    // modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.375, 0, -0.375));
+                    
+                    modelMatrix = glm::translate(modelMatrix, glm::vec3(x_center_enemy, 0, y_center_enemy));
                     modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25, 1, 0.25));
-                    RenderMesh(meshes["box"], shaders["VertexNormal"], modelMatrix);
+                    RenderMeshTest(meshes["box"], shaders["EnemyShader"], modelMatrix);
+
+                    // cout << "enemy: " << x_center_enemy << ' ' << y_center_enemy << endl;
+                    // cout << "char: " << x_char << ' ' << z_char << endl << endl;
+
+                    if (!health_cooldown &&
+                        x_center_enemy - 0.125 <= x_char + 0.125 &&
+                        x_center_enemy + 0.125 >= x_char - 0.125 &&
+                        y_center_enemy - 0.125 <= z_char + 0.125 &&
+                        y_center_enemy + 0.125 >= z_char - 0.125) {
+                        health--;
+                        health_cooldown = HEALTH_COOLDOWN;
+                    }
                 }
             }
         }
@@ -355,6 +388,10 @@ void Tema2::Update(float deltaTimeSeconds)
     }
     else {
         x_enemy -= deltaTimeSeconds * speed_enemy;
+    }
+
+    if (health_cooldown > 0) {
+        health_cooldown--;
     }
 
     /*
@@ -390,6 +427,11 @@ void Tema2::Update(float deltaTimeSeconds)
     } else if (projectionType == 'O') {
         projectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
     }
+
+    if (health == 0) {
+        cout << "GAME OVER!\n";
+        exit(0);
+    }
 }
 
 
@@ -411,6 +453,47 @@ void Tema2::RenderMesh(Mesh * mesh, Shader * shader, const glm::mat4 & modelMatr
     glUniformMatrix4fv(shader->loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
     mesh->Render();
+}
+
+void Tema2::RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix)
+{
+    if (!mesh || !shader || !shader->program)
+        return;
+
+    // Render an object using the specified shader and the specified position
+    glUseProgram(shader->program);
+    /*
+    // TODO(student): Get shader location for uniform mat4 "Model"
+    GLint model_loc = glGetUniformLocation(shader->GetProgramID(), "Model");
+
+    // TODO(student): Set shader uniform "Model" to modelMatrix
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+    // TODO(student): Get shader location for uniform mat4 "View"
+    GLint view_loc = glGetUniformLocation(shader->GetProgramID(), "View");
+
+    // TODO(student): Set shader uniform "View" to viewMatrix
+    glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+    // TODO(student): Get shader location for uniform mat4 "Projection"
+    GLint proj_loc = glGetUniformLocation(shader->GetProgramID(), "Projection");
+
+    // TODO(student): Set shader uniform "Projection" to projectionMatrix
+    glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    */
+    GLint t_loc = glGetUniformLocation(shader->GetProgramID(), "T");
+    glUniform1f(t_loc, (GLfloat)Engine::GetElapsedTime());
+
+    shader->Use();
+    glUniformMatrix4fv(shader->loc_view_matrix, 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
+    glUniformMatrix4fv(shader->loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    glUniformMatrix4fv(shader->loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+    // Draw the object
+    glBindVertexArray(mesh->GetBuffers()->m_VAO);
+    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
 }
 
 void Tema2::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix)
@@ -533,7 +616,7 @@ void Tema2::BuildMaze() {
         }
     }
 
-    for (int i = 1; i <= 10; i++) {
+    for (int i = 1; i <= numberOfEnemies; i++) {
         int enemy_x = rand() % N_MAZE;
         int enemy_y = rand() % M_MAZE;
         if (maze[enemy_x][enemy_y] == FREE && enemy_x != 0 && enemy_x != N_MAZE - 1 && enemy_y != 0 && enemy_y != M_MAZE - 1) {

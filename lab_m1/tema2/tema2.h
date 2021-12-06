@@ -8,6 +8,8 @@
 #define FREE 1
 #define WALL 0
 #define ENEMY 2
+#define HEALTH_COOLDOWN 200
+#define HEALTH_MAX 10
 
 
 namespace m1
@@ -27,6 +29,7 @@ namespace m1
 
         void RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix) override;
         void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
+        void RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
         Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
         void BuildMaze();
         bool WallHit(float x, float y);
@@ -55,11 +58,13 @@ namespace m1
 
         // character
         float x_char, y_char, z_char, rad_char;
+        int health, health_cooldown;
 
         // maze
         int maze[N_MAZE][M_MAZE] = { WALL };
 
         // enemy
         float x_enemy, y_enemy, speed_enemy;
+        int numberOfEnemies = 10;
     };
 }   // namespace m1
