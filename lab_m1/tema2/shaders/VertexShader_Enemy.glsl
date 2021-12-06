@@ -14,6 +14,7 @@ uniform mat4 Model;
 uniform mat4 View;
 uniform mat4 Projection;
 uniform float T;
+uniform float Health;
 
 // Output
 // TODO(student): Output values to fragment shader
@@ -26,11 +27,15 @@ void main()
 {
     // TODO(student): Send output to fragment shader
     frag_position = v_position;
-    frag_normal = v_normal + vec3(sin(T), cos(T), 0);
+    if (Health > 5) {
+        frag_normal = v_normal + vec3(sin(T) / 5, cos(T) / 2, sin(T));
+    } else {
+        frag_normal = v_normal + vec3(sin(T), cos(T), 0);
+    }
     frag_texture = v_texture;
     frag_color = v_color;
 
     // TODO(student): Compute gl_Position
-    gl_Position = Projection * View * (Model * vec4(v_position, 1.0));
+    gl_Position = Projection * View * (Model * vec4(v_position, 1.0) + vec4(0, sin(T) / 5, 0, 0));
 
 }

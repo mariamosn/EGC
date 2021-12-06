@@ -486,6 +486,9 @@ void Tema2::RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMat
     GLint t_loc = glGetUniformLocation(shader->GetProgramID(), "T");
     glUniform1f(t_loc, (GLfloat)Engine::GetElapsedTime());
 
+    GLint health_loc = glGetUniformLocation(shader->GetProgramID(), "Health");
+    glUniform1f(health_loc, (GLfloat)Tema2::health);
+
     shader->Use();
     glUniformMatrix4fv(shader->loc_view_matrix, 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
     glUniformMatrix4fv(shader->loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
