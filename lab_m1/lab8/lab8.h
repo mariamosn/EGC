@@ -37,6 +37,9 @@ namespace m1
         float materialKs;
 
         // TODO(student): If you need any other class variables, define them here.
+        GLint isSpotlight;
+        GLfloat cutOff;
+        GLfloat angleOX, angleOY;
 
     };
 }   // namespace m1

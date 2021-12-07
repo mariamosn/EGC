@@ -56,7 +56,7 @@ void main()
         specular_light = material_ks * 0.75 * pow(max(dot(V, R), 0), material_shininess);
     
         // sau
-        // specular_light = material_ks * 0.75 * pow(max(dor(N, H), 0), material_shininess);
+        // specular_light = material_ks * 0.75 * pow(max(dot(N, H), 0), material_shininess);
     }
 
     // TODO(student): Compute light

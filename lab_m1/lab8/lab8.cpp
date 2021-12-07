@@ -60,6 +60,11 @@ void Lab8::Init()
         materialShininess = 30;
         materialKd = 0.5;
         materialKs = 0.5;
+
+        isSpotlight = 0;
+        cutOff = 45;
+        angleOX = 0;
+        angleOY = 0;
     }
 }
 
@@ -82,7 +87,7 @@ void Lab8::Update(float deltaTimeSeconds)
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1, 0));
         // TODO(student): Add or change the object colors
-        RenderSimpleMesh(meshes["sphere"], shaders["LabShader"], modelMatrix);
+        RenderSimpleMesh(meshes["sphere"], shaders["LabShader"], modelMatrix, glm::vec3(0, 0.5, 0.5));
 
     }
 
@@ -92,7 +97,7 @@ void Lab8::Update(float deltaTimeSeconds)
         modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
         // TODO(student): Add or change the object colors
-        RenderSimpleMesh(meshes["box"], shaders["LabShader"], modelMatrix);
+        RenderSimpleMesh(meshes["box"], shaders["LabShader"], modelMatrix, glm::vec3(0.3, 0, 0.5));
 
     }
 
@@ -100,7 +105,7 @@ void Lab8::Update(float deltaTimeSeconds)
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(-2, 0.5f, 0));
         modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
-        RenderSimpleMesh(meshes["box"], shaders["LabShader"], modelMatrix, glm::vec3(0.25, 0.75, 0.75));
+        RenderSimpleMesh(meshes["box"], shaders["LabShader"], modelMatrix, glm::vec3(0.25, 0.5, 0.75));
     }
 
     // Render ground
@@ -109,7 +114,7 @@ void Lab8::Update(float deltaTimeSeconds)
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0.01f, 0));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
         // TODO(student): Add or change the object colors
-        RenderSimpleMesh(meshes["plane"], shaders["LabShader"], modelMatrix);
+        RenderSimpleMesh(meshes["plane"], shaders["LabShader"], modelMatrix, glm::vec3(0.5, 0.5, 0.5));
 
     }
 
@@ -163,6 +168,11 @@ void Lab8::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & modelM
     glUniform3f(object_color, color.r, color.g, color.b);
 
     // TODO(student): Set any other shader uniforms that you need
+    GLint type = glGetUniformLocation(shader->program, "is_spotlight");
+    glUniform1i(type, isSpotlight);
+
+    GLfloat cut_off = glGetUniformLocation(shader->program, "cut_off_angle");
+    glUniform1f(cut_off, cutOff);
 
     // Bind model matrix
     GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
@@ -193,6 +203,7 @@ void Lab8::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & modelM
 void Lab8::OnInputUpdate(float deltaTime, int mods)
 {
     float speed = 2;
+    glm::mat4 rot = glm::mat4(1);
 
     if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
     {
@@ -210,8 +221,39 @@ void Lab8::OnInputUpdate(float deltaTime, int mods)
         if (window->KeyHold(GLFW_KEY_Q)) lightPosition -= up * deltaTime * speed;
 
         // TODO(student): Set any other keys that you might need
-
     }
+
+    if (window->KeyHold(GLFW_KEY_Z)) {
+        cutOff += deltaTime * 20;
+        if (cutOff > 360) {
+            cutOff = 360;
+        }
+    }
+    if (window->KeyHold(GLFW_KEY_X)) {
+        cutOff -= deltaTime * 20;
+        if (cutOff < 0) {
+            cutOff = 0;
+        }
+    }
+
+    if (window->KeyHold(GLFW_KEY_UP)) {
+        angleOX += deltaTime;
+    }
+    if (window->KeyHold(GLFW_KEY_DOWN)) {
+        angleOX -= deltaTime;
+    }
+    if (window->KeyHold(GLFW_KEY_RIGHT)) {
+        angleOY += deltaTime;
+    }
+    if (window->KeyHold(GLFW_KEY_LEFT)) {
+        angleOY -= deltaTime;
+    }
+
+    rot = glm::rotate(rot, angleOX, glm::vec3(0, 1, 0));
+    rot = glm::rotate(rot, angleOY, glm::vec3(1, 0, 0));
+
+    lightDirection = glm::vec3(0, -1, 0);
+    lightDirection = glm::vec3(rot * glm::vec4(lightDirection, 0));
 }
 
 
@@ -220,6 +262,9 @@ void Lab8::OnKeyPress(int key, int mods)
     // Add key press event
 
     // TODO(student): Set keys that you might need
+    if (key == GLFW_KEY_F) {
+        isSpotlight = 1 - isSpotlight;
+    }
 
 }
 
