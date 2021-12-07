@@ -10,6 +10,7 @@
 #define ENEMY 2
 #define HEALTH_COOLDOWN 200
 #define HEALTH_MAX 10
+#define ENEMY_VANISH_SPEED 7
 
 
 namespace m1
@@ -66,5 +67,9 @@ namespace m1
         // enemy
         float x_enemy, y_enemy, speed_enemy;
         int numberOfEnemies = 10;
+
+        float random;
+        float random_increase;
+        int cnt;
     };
 }   // namespace m1

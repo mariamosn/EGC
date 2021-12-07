@@ -138,6 +138,10 @@ void Tema2::Init()
     x_enemy = 0;
     y_enemy = 0;
     speed_enemy = 0.5;
+
+    random = 0;
+    random_increase = 0.5;
+    cnt = 0;
 }
 
 Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
@@ -432,6 +436,18 @@ void Tema2::Update(float deltaTimeSeconds)
         cout << "GAME OVER!\n";
         exit(0);
     }
+
+    cnt--;
+    if (cnt <= 0) {
+        random += random_increase;
+        if (random > 10) {
+            random_increase = -0.5;
+        }
+        else if (random < 2) {
+            random_increase = 0.5;
+        }
+        cnt = ENEMY_VANISH_SPEED;
+    }
 }
 
 
@@ -488,6 +504,9 @@ void Tema2::RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMat
 
     GLint health_loc = glGetUniformLocation(shader->GetProgramID(), "Health");
     glUniform1f(health_loc, (GLfloat)Tema2::health);
+
+    GLint random_loc = glGetUniformLocation(shader->GetProgramID(), "Random");
+    glUniform1f(random_loc, (GLfloat)Tema2::random);
 
     shader->Use();
     glUniformMatrix4fv(shader->loc_view_matrix, 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
