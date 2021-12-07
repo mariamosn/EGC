@@ -8,9 +8,11 @@
 #define FREE 1
 #define WALL 0
 #define ENEMY 2
+#define HIT 3
 #define HEALTH_COOLDOWN 200
 #define HEALTH_MAX 10
 #define ENEMY_VANISH_SPEED 7
+#define PROJ_COOLDOWN 200
 
 
 namespace m1
@@ -71,5 +73,8 @@ namespace m1
         float random;
         float random_increase;
         int cnt;
+
+        // projectile
+        int proj_cooldown;
     };
 }   // namespace m1

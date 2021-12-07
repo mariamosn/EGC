@@ -118,6 +118,13 @@ void Tema2::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("EnemyExplodingShader");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "VertexShader_EnemyExplosion.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "FragmentShader_EnemyExplosion.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     BuildMaze();
 
@@ -142,6 +149,8 @@ void Tema2::Init()
     random = 0;
     random_increase = 0.5;
     cnt = 0;
+
+    proj_cooldown = 0;
 }
 
 Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
@@ -377,6 +386,23 @@ void Tema2::Update(float deltaTimeSeconds)
                     }
                 }
             }
+            else if (maze[i][j] == HIT) {
+                if (!proj_cooldown) {
+                    maze[i][j] = FREE;
+                }
+                else {
+                    {
+                        float x_center_enemy = -0.375 + x_enemy + i;
+                        float y_center_enemy = -0.375 + y_enemy + j;
+
+                        glm::mat4 modelMatrix = glm::mat4(1);
+                        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_center_enemy, 0, y_center_enemy));
+                        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25, 1, 0.25));
+
+                        RenderMeshTest(meshes["box"], shaders["EnemyExplodingShader"], modelMatrix);
+                    }
+                }
+            }
         }
     }
 
@@ -447,6 +473,10 @@ void Tema2::Update(float deltaTimeSeconds)
             random_increase = 0.5;
         }
         cnt = ENEMY_VANISH_SPEED;
+    }
+
+    if (proj_cooldown > 0) {
+        proj_cooldown--;
     }
 }
 
