@@ -29,9 +29,26 @@ Tema2::~Tema2()
 
 void Tema2::Init()
 {
+    BuildMaze();
+
+    health = HEALTH_MAX;
+    health_cooldown = 0;
+    rad_char = 0;
+    x_char = -1;
+    for (int i = 0; i < N_MAZE && x_char == -1; i++) {
+        for (int j = 0; j < M_MAZE && x_char == -1; j++) {
+            if (maze[i][j] == FREE) {
+                x_char = i;
+                y_char = 0;
+                z_char = j;
+            }
+        }
+    }
+
     renderCameraTarget = false;
 
     camera = new implemented::Camera2();
+    // camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
     camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
 
     {
@@ -126,8 +143,8 @@ void Tema2::Init()
         shaders[shader->GetName()] = shader;
     }
 
-    BuildMaze();
-
+    // BuildMaze();
+    /*
     health = HEALTH_MAX;
     health_cooldown = 0;
     rad_char = 0;
@@ -141,7 +158,7 @@ void Tema2::Init()
             }
         }
     }
-
+    */
     x_enemy = 0;
     y_enemy = 0;
     speed_enemy = 0.5;
@@ -773,7 +790,8 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         z_char -= deltaTime;
         rad_char = 0;
         // TODO(student): Translate the camera forward
-        camera->TranslateForward(cameraSpeed * deltaTime);
+        // camera->TranslateForward(cameraSpeed * deltaTime);
+        camera->MoveForward(cameraSpeed * deltaTime);
     }
 
     if (window->KeyHold(GLFW_KEY_A) && !WallHit(x_char - deltaTime, z_char)) {
@@ -787,7 +805,8 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         z_char += deltaTime;
         rad_char = 0;
         // TODO(student): Translate the camera backward
-        camera->TranslateForward(-cameraSpeed * deltaTime);
+        // camera->TranslateForward(-cameraSpeed * deltaTime);
+        camera->MoveForward(-cameraSpeed * deltaTime);
     }
 
     if (window->KeyHold(GLFW_KEY_D) && !WallHit(x_char + deltaTime, z_char)) {
@@ -842,6 +861,7 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
         camera->RotateFirstPerson_OY(-sensivityOY * deltaX);
 
     }
+    /*
     if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
         renderCameraTarget = true;
         // TODO(student): Rotate the camera in third-person mode around
@@ -850,6 +870,7 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
         camera->RotateThirdPerson_OX(-sensivityOX * deltaY);
         camera->RotateThirdPerson_OY(-sensivityOY * deltaX);
     }
+    */
 }
 
 
