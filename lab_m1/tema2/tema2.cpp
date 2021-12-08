@@ -50,6 +50,7 @@ void Tema2::Init()
     camera = new implemented::Camera2();
     // camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
     camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+    camera->TranslateRight(1.25);
 
     {
         Mesh* mesh = new Mesh("box");
@@ -852,7 +853,7 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
     float sensivityOX = 0.001f;
     float sensivityOY = 0.001f;
 
-    if (window->GetSpecialKeyState() == 0) {
+    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
         renderCameraTarget = false;
         // TODO(student): Rotate the camera in first-person mode around
         // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
