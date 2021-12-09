@@ -9,10 +9,19 @@
 #define WALL 0
 #define ENEMY 2
 #define HIT 3
+
 #define HEALTH_COOLDOWN 200
 #define HEALTH_MAX 10
 #define ENEMY_VANISH_SPEED 7
 #define PROJ_COOLDOWN 200
+
+#define FIRST_PERSON 1
+#define THIRD_PERSON 3
+
+#define NORTH 0
+#define SOUTH 1
+#define EAST 2
+#define WEST 3
 
 
 namespace m1
@@ -76,5 +85,17 @@ namespace m1
 
         // projectile
         int proj_cooldown;
+        float x_proj;
+        float y_proj;
+        float z_proj;
+
+        int camera_type;
+        float third_person_distanceToTarget;
+        glm::vec3 third_person_position;
+        glm::vec3 third_person_forward;
+        glm::vec3 third_person_right;
+        glm::vec3 third_person_up;
+
+        int facing;
     };
 }   // namespace m1

@@ -49,8 +49,12 @@ void Tema2::Init()
 
     camera = new implemented::Camera2();
     // camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
-    camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+
+    camera->Set(glm::vec3(0, 1.75, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     camera->TranslateRight(1.25);
+    // camera->TranslateUpward(-0.5);
+    camera_type = THIRD_PERSON;
+    facing = SOUTH;
 
     {
         Mesh* mesh = new Mesh("box");
@@ -689,7 +693,7 @@ void Tema2::BuildMaze() {
     for (int i = 1; i <= numberOfEnemies; i++) {
         int enemy_x = rand() % N_MAZE;
         int enemy_y = rand() % M_MAZE;
-        if (maze[enemy_x][enemy_y] == FREE && enemy_x != 0 && enemy_x != N_MAZE - 1 && enemy_y != 0 && enemy_y != M_MAZE - 1) {
+        if (maze[enemy_x][enemy_y] == FREE && enemy_x > 1 && enemy_x != N_MAZE - 1 && enemy_y > 1 && enemy_y != M_MAZE - 1) {
             maze[enemy_x][enemy_y] = ENEMY;
         }
         else {
@@ -793,6 +797,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         // TODO(student): Translate the camera forward
         // camera->TranslateForward(cameraSpeed * deltaTime);
         camera->MoveForward(cameraSpeed * deltaTime);
+        facing = NORTH;
     }
 
     if (window->KeyHold(GLFW_KEY_A) && !WallHit(x_char - deltaTime, z_char)) {
@@ -800,6 +805,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         rad_char = 90;
         // TODO(student): Translate the camera to the left
         camera->TranslateRight(-cameraSpeed * deltaTime);
+        facing = WEST;
     }
 
     if (window->KeyHold(GLFW_KEY_S) && !WallHit(x_char, z_char + deltaTime)) {
@@ -808,6 +814,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         // TODO(student): Translate the camera backward
         // camera->TranslateForward(-cameraSpeed * deltaTime);
         camera->MoveForward(-cameraSpeed * deltaTime);
+        facing = SOUTH;
     }
 
     if (window->KeyHold(GLFW_KEY_D) && !WallHit(x_char + deltaTime, z_char)) {
@@ -815,6 +822,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         rad_char = 90;
         // TODO(student): Translate the camera to the right
         camera->TranslateRight(cameraSpeed * deltaTime);
+        facing = EAST;
     }
 }
 
@@ -838,6 +846,56 @@ void Tema2::OnKeyPress(int key, int mods)
         // left right
     }
 
+    if (key == GLFW_KEY_SPACE) {
+        if (camera_type == THIRD_PERSON) {
+            third_person_position = camera->position;
+            third_person_forward = camera->forward;
+            third_person_distanceToTarget = camera->distanceToTarget;
+            third_person_right = camera->right;
+            third_person_up = camera->up;
+
+            // camera->position = camera->GetTargetPosition();
+            camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+            // camera->forward = glm::vec1(-1) * third_person_forward;
+            if (facing == SOUTH) {
+                /*
+                camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+                camera->forward = glm::vec3(0, 0, 3.5);
+                */
+                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
+            }
+            else if (facing == NORTH) {
+                /*
+                camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
+                camera->forward = glm::vec3(0, 0, -3.5);
+                */
+                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
+            }
+            else if (facing == EAST) {
+                /*
+                camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
+                camera->forward = glm::vec3(0, 0, 3.5);
+                camera->RotateFirstPerson_OY(90);
+                */
+                camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
+            }
+            else if (facing == WEST) {
+                camera->Set(glm::vec3(x_char - 0.25, y_char + 0.5, z_char), glm::vec3(x_char - 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
+            }
+            
+            camera_type = FIRST_PERSON;
+        }
+        else if (camera_type == FIRST_PERSON) {
+            camera->position = third_person_position;
+            camera->forward = third_person_forward;
+            camera->up = third_person_up;
+            camera->distanceToTarget = third_person_distanceToTarget;
+            camera->right = third_person_right;
+
+            camera_type = THIRD_PERSON;
+        }
+    }
+
 }
 
 
@@ -852,16 +910,60 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
     // Add mouse move event
     float sensivityOX = 0.001f;
     float sensivityOY = 0.001f;
+    /*
+    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL && camera_type == THIRD_PERSON) {
+        if (camera_type == THIRD_PERSON) {
+            third_person_position = camera->position;
+            third_person_forward = camera->forward;
+            third_person_distanceToTarget = camera->distanceToTarget;
+            third_person_right = camera->right;
+            third_person_up = camera->up;
 
-    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
+            // camera->position = camera->GetTargetPosition();
+            camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+            // camera->forward = glm::vec1(-1) * third_person_forward;
+            if (facing == SOUTH) {
+                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+                // camera->forward = glm::vec3(0, 0, 3.5);
+                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
+            }
+            else if (facing == NORTH) {
+                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
+                // camera->forward = glm::vec3(0, 0, -3.5);
+                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
+            }
+            else if (facing == EAST) {
+                // camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
+                // camera->forward = glm::vec3(0, 0, 3.5);
+                // camera->RotateFirstPerson_OY(90);
+                camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
+            }
+            else if (facing == WEST) {
+                camera->Set(glm::vec3(x_char - 0.25, y_char + 0.5, z_char), glm::vec3(x_char - 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
+            }
+
+            camera_type = FIRST_PERSON;
+        }
+        else if (camera_type == FIRST_PERSON) {
+            camera->position = third_person_position;
+            camera->forward = third_person_forward;
+            camera->up = third_person_up;
+            camera->distanceToTarget = third_person_distanceToTarget;
+            camera->right = third_person_right;
+
+            camera_type = THIRD_PERSON;
+        }
+    }
+    */
+    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL && camera_type == FIRST_PERSON) {
         renderCameraTarget = false;
         // TODO(student): Rotate the camera in first-person mode around
         // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
         // variables for setting up the rotation speed.
         camera->RotateFirstPerson_OX(-sensivityOX * deltaY);
         camera->RotateFirstPerson_OY(-sensivityOY * deltaX);
-
     }
+    
     /*
     if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
         renderCameraTarget = true;
