@@ -88,6 +88,10 @@ namespace m1
         float x_proj;
         float y_proj;
         float z_proj;
+        bool show_proj;
+        float x_dir;
+        float y_dir;
+        float z_dir;
 
         int camera_type;
         float third_person_distanceToTarget;

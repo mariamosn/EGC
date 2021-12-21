@@ -147,6 +147,13 @@ void Tema2::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("ProjectileShader");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "VertexShader_Proj.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "FragmentShader_Proj.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     // BuildMaze();
     /*
@@ -173,6 +180,7 @@ void Tema2::Init()
     cnt = 0;
 
     proj_cooldown = 0;
+    show_proj = false;
 }
 
 Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
@@ -367,6 +375,16 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
+    if (show_proj) {
+        glm::mat4 modelMatrix = glm::mat4(1);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_proj, y_proj, z_proj));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f));
+        // modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
+        // modelMatrix = glm::translate(modelMatrix, glm::vec3(0.15, 0.125, 0));
+        // modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
+        RenderMesh(meshes["sphere"], shaders["ProjectileShader"], modelMatrix);
+        
+    }
 
     //////////////////////////////////////////////////////////////////////
 
@@ -499,6 +517,12 @@ void Tema2::Update(float deltaTimeSeconds)
 
     if (proj_cooldown > 0) {
         proj_cooldown--;
+        x_proj += x_dir * deltaTimeSeconds;
+        y_proj += y_dir * deltaTimeSeconds;
+        z_proj += z_dir * deltaTimeSeconds;
+    }
+    if (proj_cooldown == 0) {
+        show_proj = false;
     }
 }
 
@@ -887,7 +911,7 @@ void Tema2::OnKeyPress(int key, int mods)
         //projectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
         // left right
     }
-
+    /*
     if (key == GLFW_KEY_SPACE) {
         if (camera_type == THIRD_PERSON) {
             third_person_position = camera->position;
@@ -900,25 +924,19 @@ void Tema2::OnKeyPress(int key, int mods)
             camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
             // camera->forward = glm::vec1(-1) * third_person_forward;
             if (facing == SOUTH) {
-                /*
-                camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-                camera->forward = glm::vec3(0, 0, 3.5);
-                */
+                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+                // camera->forward = glm::vec3(0, 0, 3.5);
                 camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
             }
             else if (facing == NORTH) {
-                /*
-                camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
-                camera->forward = glm::vec3(0, 0, -3.5);
-                */
+                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
+                // camera->forward = glm::vec3(0, 0, -3.5);
                 camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
             }
             else if (facing == EAST) {
-                /*
-                camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
-                camera->forward = glm::vec3(0, 0, 3.5);
-                camera->RotateFirstPerson_OY(90);
-                */
+                // camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
+                // camera->forward = glm::vec3(0, 0, 3.5);
+                // camera->RotateFirstPerson_OY(90);
                 camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
             }
             else if (facing == WEST) {
@@ -935,6 +953,16 @@ void Tema2::OnKeyPress(int key, int mods)
             camera->right = third_person_right;
 
             camera_type = THIRD_PERSON;
+        }
+    }
+    */
+    if (window->KeyHold(GLFW_KEY_LEFT_CONTROL) && key == GLFW_KEY_SPACE) {
+        if (proj_cooldown == 0) {
+            proj_cooldown = PROJ_COOLDOWN;
+            x_proj = x_char;
+            y_proj = y_char + 0.5;
+            z_proj = z_char + 0.25;
+            show_proj = true;
         }
     }
 
@@ -1015,6 +1043,11 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
         // variables for setting up the rotation speed.
         camera->RotateFirstPerson_OX(-sensivityOX * deltaY);
         camera->RotateFirstPerson_OY(-sensivityOY * deltaX);
+        if (!proj_cooldown) {
+            x_dir = camera->forward.x;
+            y_dir = camera->forward.y;
+            z_dir = camera->forward.z;
+        }
     }
     
     /*
