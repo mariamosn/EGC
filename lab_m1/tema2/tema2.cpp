@@ -824,6 +824,48 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
         camera->TranslateRight(cameraSpeed * deltaTime);
         facing = EAST;
     }
+
+
+    if (window->KeyHold(GLFW_KEY_LEFT_CONTROL)) {
+        if (camera_type == THIRD_PERSON) {
+            third_person_position = camera->position;
+            third_person_forward = camera->forward;
+            third_person_distanceToTarget = camera->distanceToTarget;
+            third_person_right = camera->right;
+            third_person_up = camera->up;
+
+            // camera->position = camera->GetTargetPosition();
+            camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+            // camera->forward = glm::vec1(-1) * third_person_forward;
+            if (facing == SOUTH) {
+                /*
+                camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
+                camera->forward = glm::vec3(0, 0, 3.5);
+                */
+                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
+            }
+            else if (facing == NORTH) {
+                /*
+                camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
+                camera->forward = glm::vec3(0, 0, -3.5);
+                */
+                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
+            }
+            else if (facing == EAST) {
+                /*
+                camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
+                camera->forward = glm::vec3(0, 0, 3.5);
+                camera->RotateFirstPerson_OY(90);
+                */
+                camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
+            }
+            else if (facing == WEST) {
+                camera->Set(glm::vec3(x_char - 0.25, y_char + 0.5, z_char), glm::vec3(x_char - 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
+            }
+
+            camera_type = FIRST_PERSON;
+        }
+    }
 }
 
 
@@ -902,6 +944,17 @@ void Tema2::OnKeyPress(int key, int mods)
 void Tema2::OnKeyRelease(int key, int mods)
 {
     // Add key release event
+    if (key == GLFW_KEY_LEFT_CONTROL) {
+        if (camera_type == FIRST_PERSON) {
+            camera->position = third_person_position;
+            camera->forward = third_person_forward;
+            camera->up = third_person_up;
+            camera->distanceToTarget = third_person_distanceToTarget;
+            camera->right = third_person_right;
+
+            camera_type = THIRD_PERSON;
+        }
+    }
 }
 
 
