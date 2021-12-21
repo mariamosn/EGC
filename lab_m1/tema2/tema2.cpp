@@ -48,11 +48,9 @@ void Tema2::Init()
     renderCameraTarget = false;
 
     camera = new implemented::Camera2();
-    // camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
 
     camera->Set(glm::vec3(0, 1.75, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     camera->TranslateRight(1.25);
-    // camera->TranslateUpward(-0.5);
     camera_type = THIRD_PERSON;
     facing = SOUTH;
 
@@ -65,6 +63,12 @@ void Tema2::Init()
     {
         Mesh* mesh = new Mesh("sphere");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "sphere.obj");
+        meshes[mesh->GetMeshID()] = mesh;
+    }
+
+    {
+        Mesh* mesh = new Mesh("plane");
+        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "plane50.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
 
@@ -156,6 +160,13 @@ void Tema2::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("FloorShader");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "VertexShader_Floor.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "FragmentShader_Floor.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     // BuildMaze();
     /*
@@ -183,6 +194,11 @@ void Tema2::Init()
 
     proj_cooldown = 0;
     show_proj = false;
+
+    time = TIME_MAX;
+
+    bonus_cooldown = BONUS_COOLDOWN;
+    x_bonus = y_bonus = z_bonus = 0;
 }
 
 Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
@@ -272,10 +288,40 @@ void Tema2::Update(float deltaTimeSeconds)
 {
     {
         glm::mat4 modelMatrix = glm::mat4(1);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(N_MAZE / 2.0 - 0.5, -0.5, M_MAZE / 2.0 - 0.5));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(N_MAZE * 1.0 / 50, 1, M_MAZE * 1.0 / 50));
+        RenderMesh(meshes["plane"], shaders["FloorShader"], modelMatrix);
+    }
+    // HUD
+
+    // health
+    {
+        glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char + 1.6, y_char + 9.8, z_char - 2));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(2.5, 0.5, 2));
         RenderMeshOrtho(meshes["box"], shaders["BlueShader"], modelMatrix);
     }
+    {
+        glm::mat4 modelMatrix = glm::mat4(1);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char + 0.4 + 2.4 / HEALTH_MAX * health / 2, y_char + 9.8, z_char - 1.9));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(2.4 / HEALTH_MAX * health, 0.4, 2));
+        RenderMeshOrtho(meshes["box"], shaders["GreenShader"], modelMatrix);
+    }
+
+    // time
+    {
+        glm::mat4 modelMatrix = glm::mat4(1);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char + 8.8, y_char + 9.8, z_char - 2));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(2.5, 0.5, 2));
+        RenderMeshOrtho(meshes["box"], shaders["GreenShader"], modelMatrix);
+    }
+    {
+        glm::mat4 modelMatrix = glm::mat4(1);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char + 7.6 + 2.4 / TIME_MAX * time / 2, y_char + 9.8, z_char - 1.9));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(2.4 / TIME_MAX * time, 0.4, 2));
+        RenderMeshOrtho(meshes["box"], shaders["BlueShader"], modelMatrix);
+    }
+
     // character
     // head
     {
@@ -463,6 +509,24 @@ void Tema2::Update(float deltaTimeSeconds)
                     explosion_done--;
                 }
             }
+            else if (maze[i][j] == BONUS) {
+                if (i - 0.2 / 2 <= x_char + 0.125 &&
+                    i + 0.2 / 2 >= x_char - 0.125 &&
+                    j - 0.2 / 2 <= z_char + 0.125 &&
+                    j + 0.2 / 2 >= z_char - 0.125) {
+                    if (health < HEALTH_MAX) {
+                        health++;
+                    }
+                    bonus_cooldown = 0;
+                    maze[i][j] = FREE;
+                }
+
+                glm::mat4 modelMatrix = glm::mat4(1);
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
+                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2));
+                RenderMesh(meshes["sphere"], shaders["EnemyShader"], modelMatrix);
+            }
         }
     }
 
@@ -518,10 +582,15 @@ void Tema2::Update(float deltaTimeSeconds)
         projectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
     }
 
-    if (health == 0) {
+    if (health == 0 || time == 0) {
         cout << "GAME OVER!\n";
         exit(0);
     }
+    if (x_char >= N_MAZE ||  z_char >= M_MAZE) {
+        cout << "YOU WON!\n";
+        exit(0);
+    }
+    time--;
 
     cnt--;
     if (cnt <= 0) {
@@ -547,6 +616,22 @@ void Tema2::Update(float deltaTimeSeconds)
     if (proj_cooldown == 0) {
         show_proj = false;
     }
+
+    if (bonus_cooldown <= 0) {
+        if (x_bonus) {
+            maze[x_bonus][z_bonus] = FREE;
+        }
+        bonus_cooldown = BONUS_COOLDOWN;
+        x_bonus = rand() % N_MAZE;
+        z_bonus = rand() % M_MAZE;
+        while (!(maze[x_bonus][z_bonus] == FREE && x_bonus > 1 && x_bonus != N_MAZE - 1 && z_bonus > 1 && z_bonus != M_MAZE - 1)) {
+            x_bonus = rand() % N_MAZE;
+            z_bonus = rand() % M_MAZE;
+        }
+        maze[x_bonus][z_bonus] = BONUS;
+    }
+
+    bonus_cooldown--;
 }
 
 

@@ -9,12 +9,15 @@
 #define WALL 0
 #define ENEMY 2
 #define HIT 3
+#define BONUS 4
 
-#define HEALTH_COOLDOWN 200
+#define HEALTH_COOLDOWN 100
 #define HEALTH_MAX 10
 #define ENEMY_VANISH_SPEED 7
 #define PROJ_COOLDOWN 200
 #define EXPLOSION 300
+#define TIME_MAX 10000
+#define BONUS_COOLDOWN 200
 
 #define ENEMY_SIZE 0.5
 
@@ -107,5 +110,10 @@ namespace m1
         glm::vec3 third_person_up;
 
         int facing;
+        int time;
+
+        // bonus
+        int x_bonus, y_bonus, z_bonus;
+        int bonus_cooldown;
     };
 }   // namespace m1
