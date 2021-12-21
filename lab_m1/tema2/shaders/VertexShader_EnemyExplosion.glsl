@@ -1,13 +1,15 @@
 #version 330
 
+// Sources:
+// https://github.com/ashima/webgl-noise/blob/master/src/classicnoise3D.glsl
+// https://www.clicktorelease.com/blog/vertex-displacement-noise-3d-webgl-glsl-three-js/
+
 // Input
-// TODO(student): Get vertex attributes from each location
+// Get vertex attributes from each location
 layout(location = 0) in vec3 v_position;
 layout(location = 1) in vec3 v_normal;
 layout(location = 2) in vec2 v_texture;
 layout(location = 3) in vec3 v_color;
-// layout(location = 3) in vec3 v_normal;
-// layout(location = 1) in vec3 v_color;
 
 // Uniform properties
 uniform mat4 Model;
@@ -18,7 +20,7 @@ uniform float Health;
 uniform float Random;
 
 // Output
-// TODO(student): Output values to fragment shader
+// Output values to fragment shader
 out vec3 frag_position;
 out vec3 frag_normal;
 out vec2 frag_texture;
@@ -219,21 +221,18 @@ float turbulence( vec3 p ) {
 
 void main()
 {
-    // TODO(student): Send output to fragment shader
+    // Send output to fragment shader
     frag_position = v_position;
     if (Health > 5) {
         frag_color = v_normal + vec3(sin(T) / 5, cos(T) / 2, sin(T));
-        // frag_normal = v_normal + vec3(sin(T) / 5, cos(T) / 2, sin(T));
     } else {
         frag_color = v_normal + vec3(sin(T), cos(T), 0);
-        // frag_normal = v_normal + vec3(sin(T), cos(T), 0);
     }
     frag_texture = v_texture;
-    // frag_color = v_color;
     frag_normal = v_normal;
 
     
-    // get a turbulent 3d noise using the normal, normal to high freq
+  // get a turbulent 3d noise using the normal, normal to high freq
   float noise = 10.0 *  -.10 * turbulence( .5 * v_normal );
   // get a 3d noise using the position, low frequency
   float b = 5.0 * pnoise( 0.05 * v_position, vec3( 100.0 ) );
@@ -243,8 +242,4 @@ void main()
   // move the position along the normal and transform it
   vec3 newPosition = v_position + v_normal * (displacement / Random);
   gl_Position = Projection * View * (Model * vec4( newPosition, 1.0 ) + + vec4(0, sin(T) / 5, 0, 0));
-  
-  
-    // TODO(student): Compute gl_Position
-   // gl_Position = Projection * View * (Model * vec4(v_position, 1.0) + vec4(0, sin(T) / 5, 0, 0));
 }

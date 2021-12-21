@@ -49,7 +49,6 @@ namespace m1
         void RenderMeshOrtho(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
         void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
         void RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
-        Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
         void BuildMaze();
         bool WallHit(float x, float y);
 
@@ -65,10 +64,8 @@ namespace m1
      protected:
         implemented::Camera2 *camera;
         glm::mat4 projectionMatrix;
-        bool renderCameraTarget;
         glm::mat4 orthoProjectionMatrix;
 
-        // TODO(student): If you need any other class variables, define them here.
         float fov;
         float left, right;
         float bottom, top;
@@ -102,6 +99,7 @@ namespace m1
         float y_dir;
         float z_dir;
 
+        // camera
         int camera_type;
         float third_person_distanceToTarget;
         glm::vec3 third_person_position;

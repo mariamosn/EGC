@@ -29,10 +29,14 @@ Tema2::~Tema2()
 
 void Tema2::Init()
 {
+    // build maze
     BuildMaze();
 
+    // initial health state
     health = HEALTH_MAX;
     health_cooldown = 0;
+
+    // place the character
     rad_char = 0;
     x_char = -1;
     for (int i = 0; i < N_MAZE && x_char == -1; i++) {
@@ -45,72 +49,40 @@ void Tema2::Init()
         }
     }
 
-    renderCameraTarget = false;
-
+    // set third person camera
     camera = new implemented::Camera2();
-
     camera->Set(glm::vec3(0, 1.75, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     camera->TranslateRight(1.25);
     camera_type = THIRD_PERSON;
     facing = SOUTH;
 
+    // shapes
     {
         Mesh* mesh = new Mesh("box");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "box.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
-
     {
         Mesh* mesh = new Mesh("sphere");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "sphere.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
-
     {
         Mesh* mesh = new Mesh("plane");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "plane50.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
 
-    // TODO(student): After you implement the changing of the projection
-    // parameters, remove hardcodings of these parameters
+    // projection matrix
     right = 10;
     left = 0;
     bottom = 0;
     top = 10;
     fov = 50;
-    // fov original = 60
     projectionMatrix = glm::perspective(RADIANS(fov), window->props.aspectRatio, z_near, z_far);
     orthoProjectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
 
-    // Create a simple cube
-    {
-        vector<VertexFormat> vertices
-        {
-            VertexFormat(glm::vec3(-1, -1,  1), glm::vec3(0, 1, 1), glm::vec3(0.2, 0.8, 0.2)),
-            VertexFormat(glm::vec3(1, -1,  1), glm::vec3(1, 0, 1), glm::vec3(0.9, 0.4, 0.2)),
-            VertexFormat(glm::vec3(-1,  1,  1), glm::vec3(1, 0, 0), glm::vec3(0.7, 0.7, 0.1)),
-            VertexFormat(glm::vec3(1,  1,  1), glm::vec3(0, 1, 0), glm::vec3(0.7, 0.3, 0.7)),
-            VertexFormat(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1), glm::vec3(0.3, 0.5, 0.4)),
-            VertexFormat(glm::vec3(1, -1, -1), glm::vec3(0, 1, 1), glm::vec3(0.5, 0.2, 0.9)),
-            VertexFormat(glm::vec3(-1,  1, -1), glm::vec3(1, 1, 0), glm::vec3(0.7, 0.0, 0.7)),
-            VertexFormat(glm::vec3(1,  1, -1), glm::vec3(0, 0, 1), glm::vec3(0.1, 0.5, 0.8)),
-        };
-
-        vector<unsigned int> indices =
-        {
-            0, 1, 2,        1, 3, 2,
-            2, 3, 7,        2, 7, 6,
-            1, 7, 3,        1, 5, 7,
-            6, 7, 4,        7, 5, 4,
-            0, 4, 1,        1, 4, 5,
-            2, 6, 4,        0, 2, 4,
-        };
-
-        CreateMesh("cube", vertices, indices);
-    }
-
-    // Create a shader program for drawing face polygon with the color of the normal
+    // shaders
     {
         Shader* shader = new Shader("SkinShader");
         shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema2", "shaders", "VertexShader_Skin.glsl"), GL_VERTEX_SHADER);
@@ -168,22 +140,7 @@ void Tema2::Init()
         shaders[shader->GetName()] = shader;
     }
 
-    // BuildMaze();
-    /*
-    health = HEALTH_MAX;
-    health_cooldown = 0;
-    rad_char = 0;
-    x_char = -1;
-    for (int i = 0; i < N_MAZE && x_char == -1; i++) {
-        for (int j = 0; j < M_MAZE && x_char == -1; j++) {
-            if (maze[i][j] == FREE) {
-                x_char = i;
-                y_char = 0;
-                z_char = j;
-            }
-        }
-    }
-    */
+    // enemy
     x_enemy = 0;
     y_enemy = 0;
     speed_enemy = 1;
@@ -192,83 +149,16 @@ void Tema2::Init()
     random_increase = 0.5;
     cnt = 0;
 
+    // projectile
     proj_cooldown = 0;
     show_proj = false;
 
+    // timer
     time = TIME_MAX;
 
+    // health bonus
     bonus_cooldown = BONUS_COOLDOWN;
     x_bonus = y_bonus = z_bonus = 0;
-}
-
-Mesh* Tema2::CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices)
-{
-    unsigned int VAO = 0;
-    // Create the VAO and bind it
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    // Create the VBO and bind it
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // Send vertices data into the VBO buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-
-    // Create the IBO and bind it
-    unsigned int IBO;
-    glGenBuffers(1, &IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-
-    // Send indices data into the IBO buffer
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-    // ========================================================================
-    // This section demonstrates how the GPU vertex shader program
-    // receives data.
-
-    // TODO(student): If you look closely in the `Init()` and `Update()`
-    // functions, you will see that we have three objects which we load
-    // and use in three different ways:
-    // - LoadMesh   + LabShader (this lab's shader)
-    // - CreateMesh + VertexNormal (this shader is already implemented)
-    // - CreateMesh + LabShader (this lab's shader)
-    // To get an idea about how they're different from one another, do the
-    // following experiments. What happens if you switch the color pipe and
-    // normal pipe in this function (but not in the shader)? Now, what happens
-    // if you do the same thing in the shader (but not in this function)?
-    // Finally, what happens if you do the same thing in both places? Why?
-
-    // Set vertex position attribute
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), 0);
-
-    // Set vertex normal attribute
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)(sizeof(glm::vec3)));
-
-    // Set texture coordinate attribute
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)(2 * sizeof(glm::vec3)));
-
-    // Set vertex color attribute
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)(2 * sizeof(glm::vec3) + sizeof(glm::vec2)));
-    // ========================================================================
-
-    // Unbind the VAO
-    glBindVertexArray(0);
-
-    // Check for OpenGL errors
-    CheckOpenGLError();
-
-    // Mesh information is saved into a Mesh object
-    meshes[name] = new Mesh(name);
-    meshes[name]->InitFromBuffer(VAO, static_cast<unsigned int>(indices.size()));
-    meshes[name]->vertices = vertices;
-    meshes[name]->indices = indices;
-    return meshes[name];
 }
 
 
@@ -286,12 +176,15 @@ void Tema2::FrameStart()
 
 void Tema2::Update(float deltaTimeSeconds)
 {
+    // floor
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(N_MAZE / 2.0 - 0.5, -0.5, M_MAZE / 2.0 - 0.5));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(N_MAZE * 1.0 / 50, 1, M_MAZE * 1.0 / 50));
         RenderMesh(meshes["plane"], shaders["FloorShader"], modelMatrix);
     }
+
+
     // HUD
 
     // health
@@ -322,7 +215,9 @@ void Tema2::Update(float deltaTimeSeconds)
         RenderMeshOrtho(meshes["box"], shaders["BlueShader"], modelMatrix);
     }
 
+
     // character
+
     // head
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -333,6 +228,7 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
+
     // body
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -343,6 +239,7 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 1, 0.5));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
+
     // shoulders
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -353,6 +250,7 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.8f, 0.2, 0.2));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
+
     // arms
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -372,6 +270,7 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 0.75, 0.2));
         RenderMesh(meshes["box"], shaders["GreenShader"], modelMatrix);
     }
+
     // hands
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -391,6 +290,7 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
+
     // legs
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -410,6 +310,7 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f, 1, 0.25));
         RenderMesh(meshes["box"], shaders["BlueShader"], modelMatrix);
     }
+
     // feet
     {
         glm::mat4 modelMatrix = glm::mat4(1);
@@ -429,18 +330,16 @@ void Tema2::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["box"], shaders["SkinShader"], modelMatrix);
     }
+
+    // projectile
     if (show_proj) {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_proj, y_proj, z_proj));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(rad_char), glm::vec3(0, 1, 0));
-        // modelMatrix = glm::translate(modelMatrix, glm::vec3(0.15, 0.125, 0));
-        // modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         RenderMesh(meshes["sphere"], shaders["ProjectileShader"], modelMatrix);
         
     }
 
-    //////////////////////////////////////////////////////////////////////
 
     // maze
     for (int i = 0; i < N_MAZE; i++) {
@@ -448,7 +347,6 @@ void Tema2::Update(float deltaTimeSeconds)
             if (maze[i][j] == WALL) {
                 glm::mat4 modelMatrix = glm::mat4(1);
                 modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
-                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
                 modelMatrix = glm::scale(modelMatrix, glm::vec3(1));
                 RenderMesh(meshes["box"], shaders["Simple"], modelMatrix);
             }
@@ -457,18 +355,10 @@ void Tema2::Update(float deltaTimeSeconds)
                     float x_center_enemy = -ENEMY_SIZE / 2 + x_enemy + i;
                     float y_center_enemy = -ENEMY_SIZE / 2 + y_enemy + j;
 
-                    glm::mat4 modelMatrix = glm::mat4(1);
-                    
-                    // modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
-                    // modelMatrix = glm::translate(modelMatrix, glm::vec3(x_enemy, 0, y_enemy));
-                    // modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.375, 0, -0.375));
-                    
+                    glm::mat4 modelMatrix = glm::mat4(1);                    
                     modelMatrix = glm::translate(modelMatrix, glm::vec3(x_center_enemy, 0, y_center_enemy));
                     modelMatrix = glm::scale(modelMatrix, glm::vec3(ENEMY_SIZE, 1, ENEMY_SIZE));
                     RenderMeshTest(meshes["box"], shaders["EnemyShader"], modelMatrix);
-
-                    // cout << "enemy: " << x_center_enemy << ' ' << y_center_enemy << endl;
-                    // cout << "char: " << x_char << ' ' << z_char << endl << endl;
 
                     if (!health_cooldown &&
                         x_center_enemy - ENEMY_SIZE / 2 <= x_char + 0.125 &&
@@ -523,14 +413,13 @@ void Tema2::Update(float deltaTimeSeconds)
 
                 glm::mat4 modelMatrix = glm::mat4(1);
                 modelMatrix = glm::translate(modelMatrix, glm::vec3(i, 0, j));
-                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 1, 0));
                 modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2));
                 RenderMesh(meshes["sphere"], shaders["EnemyShader"], modelMatrix);
             }
         }
     }
 
-    // TODO : de corectat
+    // enemy movement inside a cell
     if (x_enemy <= 0 && y_enemy < 1 - ENEMY_SIZE) {
         y_enemy += deltaTimeSeconds * speed_enemy;
     }
@@ -544,54 +433,25 @@ void Tema2::Update(float deltaTimeSeconds)
         x_enemy -= deltaTimeSeconds * speed_enemy;
     }
 
+    // health update
     if (health_cooldown > 0) {
         health_cooldown--;
     }
 
-    /*
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 1, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(45.0f), glm::vec3(0, 1, 0));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
-        RenderSimpleMesh(meshes["cube"], shaders["VertexNormal"], modelMatrix);
-    }
-
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(2, 0.5f, 0));
-        // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25f));
-        RenderSimpleMesh(meshes["cube"], shaders["LabShader"], modelMatrix);
-    }
-    */
-
-    // Render the camera target. This is useful for understanding where
-    // the rotation point is, when moving in third-person camera mode.
-    if (renderCameraTarget)
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, camera->GetTargetPosition());
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
-        RenderMesh(meshes["sphere"], shaders["VertexNormal"], modelMatrix);
-    }
-
-    if (projectionType == 'P') {
-        projectionMatrix = glm::perspective(RADIANS(fov), window->props.aspectRatio, z_near, z_far);
-    } else if (projectionType == 'O') {
-        projectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
-    }
-
+    // game status
     if (health == 0 || time == 0) {
         cout << "GAME OVER!\n";
         exit(0);
     }
-    if (x_char >= N_MAZE ||  z_char >= M_MAZE) {
+
+    if (x_char + 0.5 >= N_MAZE ||  z_char + 0.5 >= M_MAZE) {
         cout << "YOU WON!\n";
         exit(0);
     }
+
     time--;
 
+    // enemy "explosion"
     cnt--;
     if (cnt <= 0) {
         random += random_increase;
@@ -604,6 +464,7 @@ void Tema2::Update(float deltaTimeSeconds)
         cnt = ENEMY_VANISH_SPEED;
     }
 
+    // projectile movement
     if (proj_cooldown > 0) {
         proj_cooldown--;
         x_proj += x_dir * deltaTimeSeconds;
@@ -613,10 +474,12 @@ void Tema2::Update(float deltaTimeSeconds)
             show_proj = false;
         }
     }
+
     if (proj_cooldown == 0) {
         show_proj = false;
     }
 
+    // health bonus
     if (bonus_cooldown <= 0) {
         if (x_bonus) {
             maze[x_bonus][z_bonus] = FREE;
@@ -676,27 +539,7 @@ void Tema2::RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMat
 
     // Render an object using the specified shader and the specified position
     glUseProgram(shader->program);
-    /*
-    // TODO(student): Get shader location for uniform mat4 "Model"
-    GLint model_loc = glGetUniformLocation(shader->GetProgramID(), "Model");
-
-    // TODO(student): Set shader uniform "Model" to modelMatrix
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-    // TODO(student): Get shader location for uniform mat4 "View"
-    GLint view_loc = glGetUniformLocation(shader->GetProgramID(), "View");
-
-    // TODO(student): Set shader uniform "View" to viewMatrix
-    glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
-    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-
-    // TODO(student): Get shader location for uniform mat4 "Projection"
-    GLint proj_loc = glGetUniformLocation(shader->GetProgramID(), "Projection");
-
-    // TODO(student): Set shader uniform "Projection" to projectionMatrix
-    glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
-    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    */
+    
     GLint t_loc = glGetUniformLocation(shader->GetProgramID(), "T");
     glUniform1f(t_loc, (GLfloat)Engine::GetElapsedTime());
 
@@ -724,23 +567,23 @@ void Tema2::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelM
     // Render an object using the specified shader and the specified position
     glUseProgram(shader->program);
 
-    // TODO(student): Get shader location for uniform mat4 "Model"
+    // Get shader location for uniform mat4 "Model"
     GLint model_loc = glGetUniformLocation(shader->GetProgramID(), "Model");
 
-    // TODO(student): Set shader uniform "Model" to modelMatrix
+    // Set shader uniform "Model" to modelMatrix
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-    // TODO(student): Get shader location for uniform mat4 "View"
+    // Get shader location for uniform mat4 "View"
     GLint view_loc = glGetUniformLocation(shader->GetProgramID(), "View");
 
-    // TODO(student): Set shader uniform "View" to viewMatrix
+    // Set shader uniform "View" to viewMatrix
     glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
-    // TODO(student): Get shader location for uniform mat4 "Projection"
+    // Get shader location for uniform mat4 "Projection"
     GLint proj_loc = glGetUniformLocation(shader->GetProgramID(), "Projection");
 
-    // TODO(student): Set shader uniform "Projection" to projectionMatrix
+    // Set shader uniform "Projection" to projectionMatrix
     glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
@@ -836,6 +679,7 @@ void Tema2::BuildMaze() {
         }
     }
 
+    // place enemies
     for (int i = 1; i <= numberOfEnemies; i++) {
         int enemy_x = rand() % N_MAZE;
         int enemy_y = rand() % M_MAZE;
@@ -847,6 +691,7 @@ void Tema2::BuildMaze() {
         }
     }
 
+    // place exit
     for (int j = 0; j < M_MAZE; j++) {
         if (maze[N_MAZE - 2][j] == FREE) {
             maze[N_MAZE - 1][j] = FREE;
@@ -878,70 +723,12 @@ bool Tema2::WallHit(float x, float y) {
 void Tema2::OnInputUpdate(float deltaTime, int mods)
 {
     float cameraSpeed = 1;
-    // move the camera only if MOUSE_RIGHT button is pressed
-    if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-    {
-
-        if (window->KeyHold(GLFW_KEY_W)) {
-            // TODO(student): Translate the camera forward
-            camera->TranslateForward(cameraSpeed * deltaTime);
-        }
-
-        if (window->KeyHold(GLFW_KEY_A)) {
-            // TODO(student): Translate the camera to the left
-            camera->TranslateRight(-cameraSpeed * deltaTime);
-        }
-
-        if (window->KeyHold(GLFW_KEY_S)) {
-            // TODO(student): Translate the camera backward
-            camera->TranslateForward(-cameraSpeed * deltaTime);
-        }
-
-        if (window->KeyHold(GLFW_KEY_D)) {
-            // TODO(student): Translate the camera to the right
-            camera->TranslateRight(cameraSpeed * deltaTime);
-        }
-
-        if (window->KeyHold(GLFW_KEY_Q)) {
-            // TODO(student): Translate the camera downward
-            camera->TranslateUpward(-cameraSpeed * deltaTime);
-        }
-
-        if (window->KeyHold(GLFW_KEY_E)) {
-            // TODO(student): Translate the camera upward
-            camera->TranslateUpward(cameraSpeed * deltaTime);
-        }
-    }
-
-    // TODO(student): Change projection parameters. Declare any extra
-    // variables you might need in the class header. Inspect this file
-    // for any hardcoded projection arguments (can you find any?) and
-    // replace them with those extra variables.
-    if (window->KeyHold(GLFW_KEY_Y)) {
-        // fov
-        fov -= deltaTime * cameraSpeed;
-    }
-    if (window->KeyHold(GLFW_KEY_U)) {
-        // fov
-        fov += deltaTime * cameraSpeed;
-    }
-    if (window->KeyHold(GLFW_KEY_L)) {
-        // right
-        right -= deltaTime;
-        left += deltaTime;
-    }
-    if (window->KeyHold(GLFW_KEY_K)) {
-        // left
-        right += deltaTime;
-        left -= deltaTime;
-    }
 
     // character movement
     if (window->KeyHold(GLFW_KEY_W) && !WallHit(x_char, z_char - deltaTime)) {
         z_char -= deltaTime;
         rad_char = 0;
-        // TODO(student): Translate the camera forward
-        // camera->TranslateForward(cameraSpeed * deltaTime);
+        // Translate the camera forward
         camera->MoveForward(cameraSpeed * deltaTime);
         facing = NORTH;
     }
@@ -949,7 +736,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
     if (window->KeyHold(GLFW_KEY_A) && !WallHit(x_char - deltaTime, z_char)) {
         x_char -= deltaTime;
         rad_char = 90;
-        // TODO(student): Translate the camera to the left
+        // Translate the camera to the left
         camera->TranslateRight(-cameraSpeed * deltaTime);
         facing = WEST;
     }
@@ -957,8 +744,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
     if (window->KeyHold(GLFW_KEY_S) && !WallHit(x_char, z_char + deltaTime)) {
         z_char += deltaTime;
         rad_char = 0;
-        // TODO(student): Translate the camera backward
-        // camera->TranslateForward(-cameraSpeed * deltaTime);
+        // Translate the camera backward
         camera->MoveForward(-cameraSpeed * deltaTime);
         facing = SOUTH;
     }
@@ -966,7 +752,7 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
     if (window->KeyHold(GLFW_KEY_D) && !WallHit(x_char + deltaTime, z_char)) {
         x_char += deltaTime;
         rad_char = 90;
-        // TODO(student): Translate the camera to the right
+        // Translate the camera to the right
         camera->TranslateRight(cameraSpeed * deltaTime);
         facing = EAST;
     }
@@ -980,29 +766,15 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
             third_person_right = camera->right;
             third_person_up = camera->up;
 
-            // camera->position = camera->GetTargetPosition();
             camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-            // camera->forward = glm::vec1(-1) * third_person_forward;
+
             if (facing == SOUTH) {
-                /*
-                camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-                camera->forward = glm::vec3(0, 0, 3.5);
-                */
                 camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
             }
             else if (facing == NORTH) {
-                /*
-                camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
-                camera->forward = glm::vec3(0, 0, -3.5);
-                */
                 camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
             }
             else if (facing == EAST) {
-                /*
-                camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
-                camera->forward = glm::vec3(0, 0, 3.5);
-                camera->RotateFirstPerson_OY(90);
-                */
                 camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
             }
             else if (facing == WEST) {
@@ -1017,67 +789,6 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
 
 void Tema2::OnKeyPress(int key, int mods)
 {
-    // Add key press event
-    if (key == GLFW_KEY_T)
-    {
-        renderCameraTarget = !renderCameraTarget;
-    }
-    // TODO(student): Switch projections
-    if (key == GLFW_KEY_P) {
-        projectionType = 'P';
-        //projectionMatrix = glm::perspective(RADIANS(fov), window->props.aspectRatio, z_near, z_far);
-        //fov
-    }
-    if (key == GLFW_KEY_O) {
-        projectionType = 'O';
-        //projectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
-        // left right
-    }
-    /*
-    if (key == GLFW_KEY_SPACE) {
-        if (camera_type == THIRD_PERSON) {
-            third_person_position = camera->position;
-            third_person_forward = camera->forward;
-            third_person_distanceToTarget = camera->distanceToTarget;
-            third_person_right = camera->right;
-            third_person_up = camera->up;
-
-            // camera->position = camera->GetTargetPosition();
-            camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-            // camera->forward = glm::vec1(-1) * third_person_forward;
-            if (facing == SOUTH) {
-                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-                // camera->forward = glm::vec3(0, 0, 3.5);
-                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
-            }
-            else if (facing == NORTH) {
-                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
-                // camera->forward = glm::vec3(0, 0, -3.5);
-                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
-            }
-            else if (facing == EAST) {
-                // camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
-                // camera->forward = glm::vec3(0, 0, 3.5);
-                // camera->RotateFirstPerson_OY(90);
-                camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
-            }
-            else if (facing == WEST) {
-                camera->Set(glm::vec3(x_char - 0.25, y_char + 0.5, z_char), glm::vec3(x_char - 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
-            }
-            
-            camera_type = FIRST_PERSON;
-        }
-        else if (camera_type == FIRST_PERSON) {
-            camera->position = third_person_position;
-            camera->forward = third_person_forward;
-            camera->up = third_person_up;
-            camera->distanceToTarget = third_person_distanceToTarget;
-            camera->right = third_person_right;
-
-            camera_type = THIRD_PERSON;
-        }
-    }
-    */
     if (window->KeyHold(GLFW_KEY_LEFT_CONTROL) && key == GLFW_KEY_SPACE) {
         if (proj_cooldown == 0) {
             proj_cooldown = PROJ_COOLDOWN;
@@ -1113,56 +824,9 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
     // Add mouse move event
     float sensivityOX = 0.001f;
     float sensivityOY = 0.001f;
-    /*
-    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL && camera_type == THIRD_PERSON) {
-        if (camera_type == THIRD_PERSON) {
-            third_person_position = camera->position;
-            third_person_forward = camera->forward;
-            third_person_distanceToTarget = camera->distanceToTarget;
-            third_person_right = camera->right;
-            third_person_up = camera->up;
-
-            // camera->position = camera->GetTargetPosition();
-            camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-            // camera->forward = glm::vec1(-1) * third_person_forward;
-            if (facing == SOUTH) {
-                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char + 0.25);
-                // camera->forward = glm::vec3(0, 0, 3.5);
-                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char + 0.25), glm::vec3(x_char, y_char + 0.5, z_char + 4), glm::vec3(0, 1, 0));
-            }
-            else if (facing == NORTH) {
-                // camera->position = glm::vec3(x_char, y_char + 0.5, z_char - 0.25);
-                // camera->forward = glm::vec3(0, 0, -3.5);
-                camera->Set(glm::vec3(x_char, y_char + 0.5, z_char - 0.25), glm::vec3(x_char, y_char + 0.5, z_char - 4), glm::vec3(0, 1, 0));
-            }
-            else if (facing == EAST) {
-                // camera->position = glm::vec3(x_char + 0.25, y_char + 0.5, z_char);
-                // camera->forward = glm::vec3(0, 0, 3.5);
-                // camera->RotateFirstPerson_OY(90);
-                camera->Set(glm::vec3(x_char + 0.25, y_char + 0.5, z_char), glm::vec3(x_char + 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
-            }
-            else if (facing == WEST) {
-                camera->Set(glm::vec3(x_char - 0.25, y_char + 0.5, z_char), glm::vec3(x_char - 4, y_char + 0.5, z_char), glm::vec3(0, 1, 0));
-            }
-
-            camera_type = FIRST_PERSON;
-        }
-        else if (camera_type == FIRST_PERSON) {
-            camera->position = third_person_position;
-            camera->forward = third_person_forward;
-            camera->up = third_person_up;
-            camera->distanceToTarget = third_person_distanceToTarget;
-            camera->right = third_person_right;
-
-            camera_type = THIRD_PERSON;
-        }
-    }
-    */
+    
     if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL && camera_type == FIRST_PERSON) {
-        renderCameraTarget = false;
-        // TODO(student): Rotate the camera in first-person mode around
-        // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-        // variables for setting up the rotation speed.
+
         camera->RotateFirstPerson_OX(-sensivityOX * deltaY);
         camera->RotateFirstPerson_OY(-sensivityOY * deltaX);
         if (!proj_cooldown) {
@@ -1171,17 +835,6 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
             z_dir = camera->forward.z;
         }
     }
-    
-    /*
-    if (window->GetSpecialKeyState() & GLFW_MOD_CONTROL) {
-        renderCameraTarget = true;
-        // TODO(student): Rotate the camera in third-person mode around
-        // OX and OY using `deltaX` and `deltaY`. Use the sensitivity
-        // variables for setting up the rotation speed.
-        camera->RotateThirdPerson_OX(-sensivityOX * deltaY);
-        camera->RotateThirdPerson_OY(-sensivityOY * deltaX);
-    }
-    */
 }
 
 
