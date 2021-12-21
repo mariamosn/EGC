@@ -71,11 +71,13 @@ void Tema2::Init()
     // TODO(student): After you implement the changing of the projection
     // parameters, remove hardcodings of these parameters
     right = 10;
-    left = 0.01;
-    bottom = 0.01;
+    left = 0;
+    bottom = 0;
     top = 10;
-    fov = 40;
-    projectionMatrix = glm::perspective(RADIANS(60), window->props.aspectRatio, z_near, z_far);
+    fov = 50;
+    // fov original = 60
+    projectionMatrix = glm::perspective(RADIANS(fov), window->props.aspectRatio, z_near, z_far);
+    orthoProjectionMatrix = glm::ortho(left, right, bottom, top, z_near, z_far);
 
     // Create a simple cube
     {
@@ -173,7 +175,7 @@ void Tema2::Init()
     */
     x_enemy = 0;
     y_enemy = 0;
-    speed_enemy = 0.5;
+    speed_enemy = 1;
 
     random = 0;
     random_increase = 0.5;
@@ -268,6 +270,12 @@ void Tema2::FrameStart()
 
 void Tema2::Update(float deltaTimeSeconds)
 {
+    {
+        glm::mat4 modelMatrix = glm::mat4(1);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(x_char + 1.6, y_char + 9.8, z_char - 2));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(2.5, 0.5, 2));
+        RenderMeshOrtho(meshes["box"], shaders["BlueShader"], modelMatrix);
+    }
     // character
     // head
     {
@@ -400,8 +408,8 @@ void Tema2::Update(float deltaTimeSeconds)
             }
             else if (maze[i][j] == ENEMY) {
                 {
-                    float x_center_enemy = -0.375 + x_enemy + i;
-                    float y_center_enemy = -0.375 + y_enemy + j;
+                    float x_center_enemy = -ENEMY_SIZE / 2 + x_enemy + i;
+                    float y_center_enemy = -ENEMY_SIZE / 2 + y_enemy + j;
 
                     glm::mat4 modelMatrix = glm::mat4(1);
                     
@@ -410,50 +418,62 @@ void Tema2::Update(float deltaTimeSeconds)
                     // modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.375, 0, -0.375));
                     
                     modelMatrix = glm::translate(modelMatrix, glm::vec3(x_center_enemy, 0, y_center_enemy));
-                    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25, 1, 0.25));
+                    modelMatrix = glm::scale(modelMatrix, glm::vec3(ENEMY_SIZE, 1, ENEMY_SIZE));
                     RenderMeshTest(meshes["box"], shaders["EnemyShader"], modelMatrix);
 
                     // cout << "enemy: " << x_center_enemy << ' ' << y_center_enemy << endl;
                     // cout << "char: " << x_char << ' ' << z_char << endl << endl;
 
                     if (!health_cooldown &&
-                        x_center_enemy - 0.125 <= x_char + 0.125 &&
-                        x_center_enemy + 0.125 >= x_char - 0.125 &&
-                        y_center_enemy - 0.125 <= z_char + 0.125 &&
-                        y_center_enemy + 0.125 >= z_char - 0.125) {
+                        x_center_enemy - ENEMY_SIZE / 2 <= x_char + 0.125 &&
+                        x_center_enemy + ENEMY_SIZE / 2 >= x_char - 0.125 &&
+                        y_center_enemy - ENEMY_SIZE / 2 <= z_char + 0.125 &&
+                        y_center_enemy + ENEMY_SIZE / 2 >= z_char - 0.125) {
                         health--;
                         health_cooldown = HEALTH_COOLDOWN;
+                    }
+
+                    if (show_proj &&
+                        y_proj >= -0.5 && y_proj <= 0.5 &&
+                        x_center_enemy - ENEMY_SIZE / 2 <= x_proj &&
+                        x_center_enemy + ENEMY_SIZE / 2 >= x_proj &&
+                        y_center_enemy - ENEMY_SIZE / 2 <= z_proj &&
+                        y_center_enemy + ENEMY_SIZE / 2 >= z_proj) {
+                        maze[i][j] = HIT;
+                        explosion_done = EXPLOSION;
+                        show_proj = false;
                     }
                 }
             }
             else if (maze[i][j] == HIT) {
-                if (!proj_cooldown) {
+                if (explosion_done <= 0) {
                     maze[i][j] = FREE;
                 }
                 else {
                     {
-                        float x_center_enemy = -0.375 + x_enemy + i;
-                        float y_center_enemy = -0.375 + y_enemy + j;
+                        float x_center_enemy = -ENEMY_SIZE / 2 + x_enemy + i;
+                        float y_center_enemy = -ENEMY_SIZE / 2 + y_enemy + j;
 
                         glm::mat4 modelMatrix = glm::mat4(1);
                         modelMatrix = glm::translate(modelMatrix, glm::vec3(x_center_enemy, 0, y_center_enemy));
-                        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.25, 1, 0.25));
+                        modelMatrix = glm::scale(modelMatrix, glm::vec3(ENEMY_SIZE, 1, ENEMY_SIZE));
 
                         RenderMeshTest(meshes["box"], shaders["EnemyExplodingShader"], modelMatrix);
                     }
+                    explosion_done--;
                 }
             }
         }
     }
 
     // TODO : de corectat
-    if (x_enemy <= 0 && y_enemy < 0.75) {
+    if (x_enemy <= 0 && y_enemy < 1 - ENEMY_SIZE) {
         y_enemy += deltaTimeSeconds * speed_enemy;
     }
-    else if (y_enemy >= 0.75 && x_enemy < 0.75) {
+    else if (y_enemy >= 1 - ENEMY_SIZE && x_enemy < 1 - ENEMY_SIZE) {
         x_enemy += deltaTimeSeconds * speed_enemy;
     }
-    else if (x_enemy >= 0.75 && y_enemy > 0) {
+    else if (x_enemy >= 1 - ENEMY_SIZE && y_enemy > 0) {
         y_enemy -= deltaTimeSeconds * speed_enemy;
     }
     else {
@@ -520,6 +540,9 @@ void Tema2::Update(float deltaTimeSeconds)
         x_proj += x_dir * deltaTimeSeconds;
         y_proj += y_dir * deltaTimeSeconds;
         z_proj += z_dir * deltaTimeSeconds;
+        if (WallHit(x_proj, z_proj) && y_proj >= -0.5 && y_proj <= 0.5) {
+            show_proj = false;
+        }
     }
     if (proj_cooldown == 0) {
         show_proj = false;
@@ -542,6 +565,20 @@ void Tema2::RenderMesh(Mesh * mesh, Shader * shader, const glm::mat4 & modelMatr
     shader->Use();
     glUniformMatrix4fv(shader->loc_view_matrix, 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
     glUniformMatrix4fv(shader->loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+    glUniformMatrix4fv(shader->loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+    mesh->Render();
+}
+
+void Tema2::RenderMeshOrtho(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix)
+{
+    if (!mesh || !shader || !shader->program)
+        return;
+
+    // Render an object using the specified shader and the specified position
+    shader->Use();
+    glUniformMatrix4fv(shader->loc_view_matrix, 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
+    glUniformMatrix4fv(shader->loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(orthoProjectionMatrix));
     glUniformMatrix4fv(shader->loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
     mesh->Render();
@@ -961,7 +998,7 @@ void Tema2::OnKeyPress(int key, int mods)
             proj_cooldown = PROJ_COOLDOWN;
             x_proj = x_char;
             y_proj = y_char + 0.5;
-            z_proj = z_char + 0.25;
+            z_proj = z_char;
             show_proj = true;
         }
     }
