@@ -97,7 +97,10 @@ void Lab9::Init()
         vector<glm::vec2> textureCoords
         {
             // TODO(student): Complete texture coordinates for the square
-            glm::vec2(0.0f, 0.0f)
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(1.0f, 1.0f),
+            glm::vec2(1.0f, 0.0f)
 
         };
 
@@ -120,6 +123,9 @@ void Lab9::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+
+    mix = false;
+    earth = false;
 }
 
 
@@ -150,7 +156,9 @@ void Lab9::Update(float deltaTimeSeconds)
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(1, 1, -3));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(2));
+        earth = true;
         RenderSimpleMesh(meshes["sphere"], shaders["LabShader"], modelMatrix, mapTextures["earth"]);
+        earth = false;
     }
 
     {
@@ -173,7 +181,9 @@ void Lab9::Update(float deltaTimeSeconds)
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.5f, 0.0f));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
-        RenderSimpleMesh(meshes["square"], shaders["LabShader"], modelMatrix, mapTextures["grass"]);
+        mix = true;
+        RenderSimpleMesh(meshes["square"], shaders["LabShader"], modelMatrix, mapTextures["grass"], mapTextures["crate"]);
+        mix = false;
     }
 
     {
@@ -215,12 +225,22 @@ void Lab9::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & modelM
 
     // TODO(student): Set any other shader uniforms that you need
 
+    glUniform1i(glGetUniformLocation(shader->program, "mix_tex"), mix);
+    glUniform1i(glGetUniformLocation(shader->program, "earth"), earth);
+
+    GLint loc_time = glGetUniformLocation(shader->program, "time");
+    glUniform1f(loc_time, (GLfloat)Engine::GetElapsedTime());
+
+
     if (texture1)
     {
         // TODO(student): Do these:
         // - activate texture location 0
+        glActiveTexture(GL_TEXTURE0);
         // - bind the texture1 ID
+        glBindTexture(GL_TEXTURE_2D, texture1->GetTextureID());
         // - send theuniform value
+        glUniform1i(glGetUniformLocation(shader->program, "texture_1"), 0);
 
     }
 
@@ -228,8 +248,11 @@ void Lab9::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & modelM
     {
         // TODO(student): Do these:
         // - activate texture location 1
+        glActiveTexture(GL_TEXTURE1);
         // - bind the texture2 ID
+        glBindTexture(GL_TEXTURE_2D, texture2->GetTextureID());
         // - send the uniform value
+        glUniform1i(glGetUniformLocation(shader->program, "texture_2"), 1);
 
     }
 
@@ -247,13 +270,22 @@ Texture2D* Lab9::CreateRandomTexture(unsigned int width, unsigned int height)
     unsigned char* data = new unsigned char[size];
 
     // TODO(student): Generate random texture data
+    for (int i = 0; i < size; i++) {
+        data[i] = rand() % 256;
+    }
 
     // TODO(student): Generate and bind the new texture ID
+    // unsigned int gl_texture_object;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
 
     if (GLEW_EXT_texture_filter_anisotropic) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4);
     }
     // TODO(student): Set the texture parameters (MIN_FILTER, MAG_FILTER and WRAPPING MODE) using glTexParameteri
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     CheckOpenGLError();
@@ -262,6 +294,7 @@ Texture2D* Lab9::CreateRandomTexture(unsigned int width, unsigned int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
     // TODO(student): Generate texture mip-maps
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     CheckOpenGLError();
 

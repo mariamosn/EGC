@@ -11,6 +11,9 @@ uniform mat4 Model;
 uniform mat4 View;
 uniform mat4 Projection;
 
+uniform float time;
+uniform bool earth;
+
 // Output
 out vec2 texcoord;
 
@@ -18,6 +21,11 @@ out vec2 texcoord;
 void main()
 {
     // TODO(student): Pass v_texture_coord as output to fragment shader
+    texcoord = v_texture_coord;
+
+    if (earth) {
+        texcoord = vec2(texcoord.x + time / 5, texcoord.y);
+    }
 
     gl_Position = Projection * View * Model * vec4(v_position, 1.0);
 }
