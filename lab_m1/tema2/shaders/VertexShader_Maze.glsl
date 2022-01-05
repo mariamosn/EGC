@@ -29,6 +29,6 @@ void main()
     frag_color = v_color;
 
     // Compute gl_Position
-    gl_Position = Projection * View * (Model * vec4(v_position, 1.0));
+    gl_Position = Projection * View * (Model * vec4(v_position, 1.0) + vec4(0, sin(T), 0, 0));
 
 }

@@ -3,6 +3,32 @@
 #include "components/simple_scene.h"
 #include "lab_m1/tema2/lab_camera.h"
 
+#define N_MAZE 21
+#define M_MAZE 21
+#define FREE 1
+#define WALL 0
+#define ENEMY 2
+#define HIT 3
+#define BONUS 4
+
+#define HEALTH_COOLDOWN 100
+#define HEALTH_MAX 10
+#define ENEMY_VANISH_SPEED 7
+#define PROJ_COOLDOWN 200
+#define EXPLOSION 300
+#define TIME_MAX 10000
+#define BONUS_COOLDOWN 200
+
+#define ENEMY_SIZE 0.5
+
+#define FIRST_PERSON 1
+#define THIRD_PERSON 3
+
+#define NORTH 0
+#define SOUTH 1
+#define EAST 2
+#define WEST 3
+
 
 namespace m1
 {
@@ -20,8 +46,11 @@ namespace m1
         void FrameEnd() override;
 
         void RenderMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix) override;
+        void RenderMeshOrtho(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
         void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
-        Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
+        void RenderMeshTest(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix);
+        void BuildMaze();
+        bool WallHit(float x, float y);
 
         void OnInputUpdate(float deltaTime, int mods) override;
         void OnKeyPress(int key, int mods) override;
@@ -35,14 +64,54 @@ namespace m1
      protected:
         implemented::Camera2 *camera;
         glm::mat4 projectionMatrix;
-        bool renderCameraTarget;
+        glm::mat4 orthoProjectionMatrix;
 
-        // TODO(student): If you need any other class variables, define them here.
         float fov;
         float left, right;
         float bottom, top;
         float z_near = 0.01;
         float z_far = 200;
         char projectionType;
+
+        // character
+        float x_char, y_char, z_char, rad_char;
+        int health, health_cooldown;
+
+        // maze
+        int maze[N_MAZE][M_MAZE] = { WALL };
+
+        // enemy
+        float x_enemy, y_enemy, speed_enemy;
+        int numberOfEnemies = 20;
+        int explosion_done;
+
+        float random;
+        float random_increase;
+        int cnt;
+
+        // projectile
+        int proj_cooldown;
+        float x_proj;
+        float y_proj;
+        float z_proj;
+        bool show_proj;
+        float x_dir;
+        float y_dir;
+        float z_dir;
+
+        // camera
+        int camera_type;
+        float third_person_distanceToTarget;
+        glm::vec3 third_person_position;
+        glm::vec3 third_person_forward;
+        glm::vec3 third_person_right;
+        glm::vec3 third_person_up;
+
+        int facing;
+        int time;
+
+        // bonus
+        int x_bonus, y_bonus, z_bonus;
+        int bonus_cooldown;
     };
 }   // namespace m1
