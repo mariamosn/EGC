@@ -66,7 +66,9 @@ int main(int argc, char **argv)
     // World* world = new m1::Tema2();
 
     // World* world = new m1::Lab8();
-    World* world = new m1::Lab9();
+    // World* world = new m1::Lab9();
+
+    World* world = new m1::Tema3();
 
     world->Init();
     world->Run();
