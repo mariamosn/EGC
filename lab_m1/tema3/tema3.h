@@ -24,8 +24,19 @@ namespace m1
         void FrameEnd() override;
 
         void RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix, Texture2D *texture1 = NULL, Texture2D *texture2 = NULL);
-        void RenderSimpleMesh_Lit(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color = glm::vec3(1));
+        void RenderSimpleMesh_1Light(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color, const glm::vec3& lightPosition);
         void RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color);
+        void RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix,
+            const glm::vec3& color1, const glm::vec3& lightPosition1,
+            const glm::vec3& color2, const glm::vec3& lightPosition2,
+            const glm::vec3& color3, const glm::vec3& lightPosition3,
+            const glm::vec3& color4, const glm::vec3& lightPosition4,
+            const glm::vec3& color5, const glm::vec3& lightPosition5,
+            const glm::vec3& color6, const glm::vec3& lightPosition6,
+            const glm::vec3& color7, const glm::vec3& lightPosition7,
+            const glm::vec3& color8, const glm::vec3& lightPosition8,
+            const glm::vec3& color9, const glm::vec3& lightPosition9
+        );
         Texture2D *CreateRandomTexture(unsigned int width, unsigned int height);
 
         void OnInputUpdate(float deltaTime, int mods) override;
@@ -44,7 +55,7 @@ namespace m1
         bool mix;
         bool earth;
 
-        glm::vec3 lightPosition;
+        // glm::vec3 lightPosition;
         glm::vec3 lightDirection;
         unsigned int materialShininess;
         float materialKd;

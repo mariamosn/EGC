@@ -149,17 +149,31 @@ void Tema3::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("OneLight");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_1Light.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_1Light.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
+    {
+        Shader* shader = new Shader("NineLights");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_9Lights.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_9Lights.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     mix = false;
     earth = false;
 
     // Light & material properties
     {
-        lightPosition = glm::vec3(0, 1, 1);
+        // lightPosition = glm::vec3(0, 1, 1);
         lightDirection = glm::vec3(0, -1, 0);
         materialShininess = 30;
-        materialKd = 0.5;
-        materialKs = 0.5;
+        materialKd = 0.8;
+        materialKs = 1.5;
 
         isSpotlight = 0;
         cutOff = 45;
@@ -200,11 +214,195 @@ void Tema3::Update(float deltaTimeSeconds)
     // floor
     for (int i = 0; i < FLOOR_SIZE; i++) {
         for (int j = 0; j < FLOOR_SIZE; j++) {
+            // floor tile
+            {
+                glm::mat4 modelMatrix = glm::mat4(1);
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
+                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.01, 1));
+                RenderSimpleMesh_Floor(meshes["box"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
+            }
+
+            // floor light
+            /*
+            {
+                glm::mat4 modelMatrix = glm::mat4(1);
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
+                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
+                RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
+            }
+            */
+        }
+    }
+
+    // walls
+    for (int i = 0; i < FLOOR_SIZE; i++) {
+        {
             glm::mat4 modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2, i + 0.5));
             // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.01, 1));
-            RenderSimpleMesh_Floor(meshes["box"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
+            // RenderSimpleMesh_1Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5));
+
+            if (i == 0) {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
+                    floor[0][i + 1], glm::vec3(0 + 0.5, 0, i + 1 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            else if (i == FLOOR_SIZE - 1) {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
+                    floor[0][i - 1], glm::vec3(0 + 0.5, 0, i - 1 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            else {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
+                    floor[0][i - 1], glm::vec3(0 + 0.5, 0, i - 1 + 0.5),
+                    floor[0][i + 1], glm::vec3(0 + 0.5, 0, i + 1 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+
+            /*
+            modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(0 + 0.5, 0, i + 0.5));
+            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
+            RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[0][i]);
+            */
+        }
+        {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE, 2, i + 0.5));
+            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
+            // RenderSimpleMesh_1Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 1, i + 0.5));
+            
+            
+            if (i == 0) {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5 - 0.25, 1, i + 0.5),
+                    floor[FLOOR_SIZE - 1][i + 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 1 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            else if (i == FLOOR_SIZE - 1) {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
+                    floor[FLOOR_SIZE - 1][i - 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i - 1 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            else {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
+                    floor[FLOOR_SIZE - 1][i - 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i - 1 + 0.5),
+                    floor[FLOOR_SIZE - 1][i + 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 1 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+
+            /*
+            modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5));
+            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
+            RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[FLOOR_SIZE - 1][i]);
+            */
+        }
+        {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 2, 0));
+            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 4, 0.1));
+            // RenderSimpleMesh_1Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5));
+            if (i == 0) {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
+                    floor[i + 1][0], glm::vec3(i + 1 + 0.5, 0, 0 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            else if (i == FLOOR_SIZE - 1) {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
+                    floor[i - 1][0], glm::vec3(i - 1 + 0.5, 0, 0 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            else {
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                    floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
+                    floor[i + 1][0], glm::vec3(i + 1 + 0.5, 0, 0 + 0.5),
+                    floor[i - 1][0], glm::vec3(i - 1 + 0.5, 0, 0 + 0.5),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1),
+                    glm::vec3(-1), glm::vec3(-1)
+                );
+            }
+            // RenderSimpleMesh_9Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5));
+
+            /*
+            modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, 0 + 0.5));
+            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
+            RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[i][0]);
+            */
         }
     }
 
@@ -297,7 +495,7 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
     glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
 }
 
-void Tema3::RenderSimpleMesh_Lit(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color)
+void Tema3::RenderSimpleMesh_1Light(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color, const glm::vec3& lightPosition)
 {
     if (!mesh || !shader || !shader->GetProgramID())
         return;
@@ -309,9 +507,10 @@ void Tema3::RenderSimpleMesh_Lit(Mesh* mesh, Shader* shader, const glm::mat4& mo
     int light_position = glGetUniformLocation(shader->program, "light_position");
     glUniform3f(light_position, lightPosition.x, lightPosition.y, lightPosition.z);
 
+    /*
     int light_direction = glGetUniformLocation(shader->program, "light_direction");
     glUniform3f(light_direction, lightDirection.x, lightDirection.y, lightDirection.z);
-
+    */
     // Set eye position (camera position) uniform
     glm::vec3 eyePosition = GetSceneCamera()->m_transform->GetWorldPosition();
     int eye_position = glGetUniformLocation(shader->program, "eye_position");
@@ -329,14 +528,121 @@ void Tema3::RenderSimpleMesh_Lit(Mesh* mesh, Shader* shader, const glm::mat4& mo
 
     int object_color = glGetUniformLocation(shader->program, "object_color");
     glUniform3f(object_color, color.r, color.g, color.b);
-
+    /*
     // TODO(student): Set any other shader uniforms that you need
     GLint type = glGetUniformLocation(shader->program, "is_spotlight");
     glUniform1i(type, isSpotlight);
 
     GLfloat cut_off = glGetUniformLocation(shader->program, "cut_off_angle");
     glUniform1f(cut_off, cutOff);
+    */
+    // Bind model matrix
+    GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
+    glUniformMatrix4fv(loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
+    // Bind view matrix
+    glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
+    int loc_view_matrix = glGetUniformLocation(shader->program, "View");
+    glUniformMatrix4fv(loc_view_matrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+    // Bind projection matrix
+    glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
+    int loc_projection_matrix = glGetUniformLocation(shader->program, "Projection");
+    glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    // Draw the object
+    glBindVertexArray(mesh->GetBuffers()->m_VAO);
+    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
+}
+
+void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix,
+                                        const glm::vec3& color1 = glm::vec3(-1), const glm::vec3& lightPosition1 = glm::vec3(-1),
+                                        const glm::vec3& color2 = glm::vec3(-1), const glm::vec3& lightPosition2 = glm::vec3(-1),
+                                        const glm::vec3& color3 = glm::vec3(-1), const glm::vec3& lightPosition3 = glm::vec3(-1),
+                                        const glm::vec3& color4 = glm::vec3(-1), const glm::vec3& lightPosition4 = glm::vec3(-1),
+                                        const glm::vec3& color5 = glm::vec3(-1), const glm::vec3& lightPosition5 = glm::vec3(-1),
+                                        const glm::vec3& color6 = glm::vec3(-1), const glm::vec3& lightPosition6 = glm::vec3(-1),
+                                        const glm::vec3& color7 = glm::vec3(-1), const glm::vec3& lightPosition7 = glm::vec3(-1),
+                                        const glm::vec3& color8 = glm::vec3(-1), const glm::vec3& lightPosition8 = glm::vec3(-1),
+                                        const glm::vec3& color9 = glm::vec3(-1), const glm::vec3& lightPosition9 = glm::vec3(-1)
+)
+{
+    if (!mesh || !shader || !shader->GetProgramID())
+        return;
+
+    // Render an object using the specified shader and the specified position
+    glUseProgram(shader->program);
+
+    // Set shader uniforms for light properties
+    int light_position1 = glGetUniformLocation(shader->program, "light_position1");
+    glUniform3f(light_position1, lightPosition1.x, lightPosition1.y, lightPosition1.z);
+
+    int light_position2 = glGetUniformLocation(shader->program, "light_position2");
+    glUniform3f(light_position2, lightPosition2.x, lightPosition2.y, lightPosition2.z);
+
+    int light_position3 = glGetUniformLocation(shader->program, "light_position3");
+    glUniform3f(light_position3, lightPosition3.x, lightPosition3.y, lightPosition3.z);
+
+    int light_position4 = glGetUniformLocation(shader->program, "light_position4");
+    glUniform3f(light_position4, lightPosition4.x, lightPosition4.y, lightPosition4.z);
+
+    int light_position5 = glGetUniformLocation(shader->program, "light_position5");
+    glUniform3f(light_position5, lightPosition5.x, lightPosition5.y, lightPosition5.z);
+
+    int light_position6 = glGetUniformLocation(shader->program, "light_position6");
+    glUniform3f(light_position6, lightPosition6.x, lightPosition6.y, lightPosition6.z);
+
+    int light_position7 = glGetUniformLocation(shader->program, "light_position7");
+    glUniform3f(light_position7, lightPosition7.x, lightPosition7.y, lightPosition7.z);
+
+    int light_position8 = glGetUniformLocation(shader->program, "light_position8");
+    glUniform3f(light_position8, lightPosition8.x, lightPosition8.y, lightPosition8.z);
+
+    int light_position9 = glGetUniformLocation(shader->program, "light_position9");
+    glUniform3f(light_position9, lightPosition9.x, lightPosition9.y, lightPosition9.z);
+
+    // Set eye position (camera position) uniform
+    glm::vec3 eyePosition = GetSceneCamera()->m_transform->GetWorldPosition();
+    int eye_position = glGetUniformLocation(shader->program, "eye_position");
+    glUniform3f(eye_position, eyePosition.x, eyePosition.y, eyePosition.z);
+
+    // Set material property uniforms (shininess, kd, ks, object color) 
+    int material_shininess = glGetUniformLocation(shader->program, "material_shininess");
+    glUniform1i(material_shininess, materialShininess);
+
+    int material_kd = glGetUniformLocation(shader->program, "material_kd");
+    glUniform1f(material_kd, materialKd);
+
+    int material_ks = glGetUniformLocation(shader->program, "material_ks");
+    glUniform1f(material_ks, materialKs);
+
+    int object1_color = glGetUniformLocation(shader->program, "object1_color");
+    glUniform3f(object1_color, color1.r, color1.g, color1.b);
+
+    int object2_color = glGetUniformLocation(shader->program, "object2_color");
+    glUniform3f(object2_color, color2.r, color2.g, color2.b);
+
+    int object3_color = glGetUniformLocation(shader->program, "object3_color");
+    glUniform3f(object3_color, color3.r, color3.g, color3.b);
+
+    int object4_color = glGetUniformLocation(shader->program, "object4_color");
+    glUniform3f(object4_color, color4.r, color4.g, color4.b);
+
+    int object5_color = glGetUniformLocation(shader->program, "object5_color");
+    glUniform3f(object5_color, color5.r, color5.g, color5.b);
+
+    int object6_color = glGetUniformLocation(shader->program, "object6_color");
+    glUniform3f(object6_color, color6.r, color6.g, color6.b);
+
+    int object7_color = glGetUniformLocation(shader->program, "object7_color");
+    glUniform3f(object7_color, color7.r, color7.g, color7.b);
+
+    int object8_color = glGetUniformLocation(shader->program, "object8_color");
+    glUniform3f(object8_color, color8.r, color8.g, color8.b);
+
+    int object9_color = glGetUniformLocation(shader->program, "object9_color");
+    glUniform3f(object9_color, color9.r, color9.g, color9.b);
+ 
     // Bind model matrix
     GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
     glUniformMatrix4fv(loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
