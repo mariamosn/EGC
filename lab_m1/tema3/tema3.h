@@ -6,6 +6,7 @@
 #include "components/simple_scene.h"
 #include "components/transform.h"
 
+#define FLOOR_SIZE 8
 
 namespace m1
 {
@@ -23,6 +24,8 @@ namespace m1
         void FrameEnd() override;
 
         void RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 &modelMatrix, Texture2D *texture1 = NULL, Texture2D *texture2 = NULL);
+        void RenderSimpleMesh_Lit(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color = glm::vec3(1));
+        void RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color);
         Texture2D *CreateRandomTexture(unsigned int width, unsigned int height);
 
         void OnInputUpdate(float deltaTime, int mods) override;
@@ -34,9 +37,24 @@ namespace m1
         void OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY) override;
         void OnWindowResize(int width, int height) override;
 
+        void Generate_Floor();
+
         std::unordered_map<std::string, Texture2D *> mapTextures;
 
         bool mix;
         bool earth;
+
+        glm::vec3 lightPosition;
+        glm::vec3 lightDirection;
+        unsigned int materialShininess;
+        float materialKd;
+        float materialKs;
+
+        // TODO(student): If you need any other class variables, define them here.
+        GLint isSpotlight;
+        GLfloat cutOff;
+        GLfloat angleOX, angleOY;
+
+        glm::vec3 floor[FLOOR_SIZE][FLOOR_SIZE];
     };
 }   // namespace m1

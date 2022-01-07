@@ -26,6 +26,12 @@ Tema3::~Tema3()
 
 void Tema3::Init()
 {
+    glm::ivec2 resolution = window->GetResolution();
+    auto camera = GetSceneCamera();
+    camera->SetPosition(glm::vec3(4, 5, 12));
+    camera->SetRotation(glm::vec3(-0.4, 0, 0));
+    camera->Update();
+
     const string sourceTextureDir = PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "textures");
 
     // Load textures
@@ -67,6 +73,12 @@ void Tema3::Init()
     {
         Mesh* mesh = new Mesh("sphere");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "sphere.obj");
+        meshes[mesh->GetMeshID()] = mesh;
+    }
+
+    {
+        Mesh* mesh = new Mesh("plane");
+        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "plane50.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
 
@@ -123,9 +135,51 @@ void Tema3::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("FloorPlane");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_Plane.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_Plane.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
+    {
+        Shader* shader = new Shader("FloorLight");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_FloorLight.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_FloorLight.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     mix = false;
     earth = false;
+
+    // Light & material properties
+    {
+        lightPosition = glm::vec3(0, 1, 1);
+        lightDirection = glm::vec3(0, -1, 0);
+        materialShininess = 30;
+        materialKd = 0.5;
+        materialKs = 0.5;
+
+        isSpotlight = 0;
+        cutOff = 45;
+        angleOX = 0;
+        angleOY = 0;
+    }
+
+    Generate_Floor();
+}
+
+void Tema3::Generate_Floor() {
+    for (int i = 0; i < FLOOR_SIZE; i++) {
+        for (int j = 0; j < FLOOR_SIZE; j++) {
+            float r, g, b;
+            r = (float)(rand() % 256) / 255;
+            g = (float)(rand() % 256) / 255;
+            b = (float)(rand() % 256) / 255;
+            floor[i][j] = glm::vec3(r, g, b);
+        }
+    }
 }
 
 
@@ -143,15 +197,18 @@ void Tema3::FrameStart()
 
 void Tema3::Update(float deltaTimeSeconds)
 {
-    // TODO(student): Choose an object and add a second texture to it.
-    // For example, for the sphere, you can have the "earth" texture
-    // and the "random" texture, and you will use the `mix` function
-    // in the fragment shader to mix these two textures.
-    //
-    // However, you may have the unpleasant surprise that the "random"
-    // texture now appears onto all objects in the scene, even though
-    // you are only passing the second texture for a single object!
-    // Why does this happen? How can you solve it?
+    // floor
+    for (int i = 0; i < FLOOR_SIZE; i++) {
+        for (int j = 0; j < FLOOR_SIZE; j++) {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
+            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.01, 1));
+            RenderSimpleMesh_Floor(meshes["box"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
+        }
+    }
+
+    /*
     {
         glm::mat4 modelMatrix = glm::mat4(1);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(1, 1, -3));
@@ -192,12 +249,111 @@ void Tema3::Update(float deltaTimeSeconds)
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
         RenderSimpleMesh(meshes["bamboo"], shaders["LabShader"], modelMatrix, mapTextures["bamboo"]);
     }
+    */
 }
 
 
 void Tema3::FrameEnd()
 {
     DrawCoordinateSystem();
+}
+
+void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color)
+{
+    if (!mesh || !shader || !shader->GetProgramID())
+        return;
+
+    // Render an object using the specified shader and the specified position
+    glUseProgram(shader->program);
+
+    // TODO(student): Get shader location for uniform mat4 "Model"
+    GLint model_loc = glGetUniformLocation(shader->GetProgramID(), "Model");
+
+    // TODO(student): Set shader uniform "Model" to modelMatrix
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+    // TODO(student): Get shader location for uniform mat4 "View"
+    GLint view_loc = glGetUniformLocation(shader->GetProgramID(), "View");
+
+    // TODO(student): Set shader uniform "View" to viewMatrix
+    glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+    // TODO(student): Get shader location for uniform mat4 "Projection"
+    GLint proj_loc = glGetUniformLocation(shader->GetProgramID(), "Projection");
+
+    // TODO(student): Set shader uniform "Projection" to projectionMatrix
+    glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    GLint t_loc = glGetUniformLocation(shader->GetProgramID(), "T");
+    glUniform1f(t_loc, (GLfloat)Engine::GetElapsedTime());
+
+    int object_color = glGetUniformLocation(shader->program, "object_color");
+    glUniform3f(object_color, color.r, color.g, color.b);
+
+    // Draw the object
+    glBindVertexArray(mesh->GetBuffers()->m_VAO);
+    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
+}
+
+void Tema3::RenderSimpleMesh_Lit(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color)
+{
+    if (!mesh || !shader || !shader->GetProgramID())
+        return;
+
+    // Render an object using the specified shader and the specified position
+    glUseProgram(shader->program);
+
+    // Set shader uniforms for light properties
+    int light_position = glGetUniformLocation(shader->program, "light_position");
+    glUniform3f(light_position, lightPosition.x, lightPosition.y, lightPosition.z);
+
+    int light_direction = glGetUniformLocation(shader->program, "light_direction");
+    glUniform3f(light_direction, lightDirection.x, lightDirection.y, lightDirection.z);
+
+    // Set eye position (camera position) uniform
+    glm::vec3 eyePosition = GetSceneCamera()->m_transform->GetWorldPosition();
+    int eye_position = glGetUniformLocation(shader->program, "eye_position");
+    glUniform3f(eye_position, eyePosition.x, eyePosition.y, eyePosition.z);
+
+    // Set material property uniforms (shininess, kd, ks, object color) 
+    int material_shininess = glGetUniformLocation(shader->program, "material_shininess");
+    glUniform1i(material_shininess, materialShininess);
+
+    int material_kd = glGetUniformLocation(shader->program, "material_kd");
+    glUniform1f(material_kd, materialKd);
+
+    int material_ks = glGetUniformLocation(shader->program, "material_ks");
+    glUniform1f(material_ks, materialKs);
+
+    int object_color = glGetUniformLocation(shader->program, "object_color");
+    glUniform3f(object_color, color.r, color.g, color.b);
+
+    // TODO(student): Set any other shader uniforms that you need
+    GLint type = glGetUniformLocation(shader->program, "is_spotlight");
+    glUniform1i(type, isSpotlight);
+
+    GLfloat cut_off = glGetUniformLocation(shader->program, "cut_off_angle");
+    glUniform1f(cut_off, cutOff);
+
+    // Bind model matrix
+    GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
+    glUniformMatrix4fv(loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+    // Bind view matrix
+    glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
+    int loc_view_matrix = glGetUniformLocation(shader->program, "View");
+    glUniformMatrix4fv(loc_view_matrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+    // Bind projection matrix
+    glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
+    int loc_projection_matrix = glGetUniformLocation(shader->program, "Projection");
+    glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    // Draw the object
+    glBindVertexArray(mesh->GetBuffers()->m_VAO);
+    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
 }
 
 
