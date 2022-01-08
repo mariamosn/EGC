@@ -101,7 +101,7 @@ vec3 PointLightContribution(vec3 lightPos, vec3 lightColor) {
 
 
         // float attenuation_factor = 1 / ((d + 1) * (d + 1));
-        float attenuation_factor	= 1 / (2 + 0.10 * d + 0.05 * d * d);
+        float attenuation_factor	= 1 / (1 + 0.10 * d + 0.1 * d * d);
         // float attenuation_factor = 0;
         
         // light_radius reprezinta distanta maxima pana la care ajunge lumina unei surse
@@ -109,9 +109,10 @@ vec3 PointLightContribution(vec3 lightPos, vec3 lightColor) {
         
         // chiar daca s-au luat cele mai apropiate lumini fata de obiect,
         // la nivel de pixel, distanta poate fi mai mare decat raza
-        float light_radius = 0.5;
-        if (d < light_radius) {
-            attenuation_factor = pow(light_radius - d, 2);
+        float light_radius = 1.5;
+        if (d <= light_radius) {
+            // attenuation_factor = pow(light_radius - d, 2);
+            // attenuation_factor = 1;
         }
 
 

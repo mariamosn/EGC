@@ -163,6 +163,13 @@ void Tema3::Init()
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
+    {
+        Shader* shader = new Shader("NineLights_2");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_9Lights_2.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_9Lights_2.glsl"), GL_FRAGMENT_SHADER);
+        shader->CreateAndLink();
+        shaders[shader->GetName()] = shader;
+    }
 
     mix = false;
     earth = false;
@@ -172,8 +179,8 @@ void Tema3::Init()
         // lightPosition = glm::vec3(0, 1, 1);
         lightDirection = glm::vec3(0, -1, 0);
         materialShininess = 30;
-        materialKd = 0.8;
-        materialKs = 1.5;
+        materialKd = 0.5;
+        materialKs = 0.5;
 
         isSpotlight = 0;
         cutOff = 45;
@@ -218,21 +225,9 @@ void Tema3::Update(float deltaTimeSeconds)
             {
                 glm::mat4 modelMatrix = glm::mat4(1);
                 modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
-                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
                 modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.01, 1));
                 RenderSimpleMesh_Floor(meshes["box"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
             }
-
-            // floor light
-            /*
-            {
-                glm::mat4 modelMatrix = glm::mat4(1);
-                modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
-                // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
-                RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
-            }
-            */
         }
     }
 
@@ -241,12 +236,10 @@ void Tema3::Update(float deltaTimeSeconds)
         {
             glm::mat4 modelMatrix = glm::mat4(1);
             modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2, i + 0.5));
-            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
-            // RenderSimpleMesh_1Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5));
 
             if (i == 0) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
                     floor[0][i + 1], glm::vec3(0 + 0.5, 0, i + 1 + 0.5),
                     glm::vec3(-1), glm::vec3(-1),
@@ -259,7 +252,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 );
             }
             else if (i == FLOOR_SIZE - 1) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
                     floor[0][i - 1], glm::vec3(0 + 0.5, 0, i - 1 + 0.5),
                     glm::vec3(-1), glm::vec3(-1),
@@ -272,7 +265,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 );
             }
             else {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
                     floor[0][i - 1], glm::vec3(0 + 0.5, 0, i - 1 + 0.5),
                     floor[0][i + 1], glm::vec3(0 + 0.5, 0, i + 1 + 0.5),
@@ -284,26 +277,15 @@ void Tema3::Update(float deltaTimeSeconds)
                     glm::vec3(-1), glm::vec3(-1)
                 );
             }
-
-            /*
-            modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(0 + 0.5, 0, i + 0.5));
-            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
-            RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[0][i]);
-            */
         }
         {
             glm::mat4 modelMatrix = glm::mat4(1);
             modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE, 2, i + 0.5));
-            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
-            // RenderSimpleMesh_1Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 1, i + 0.5));
-            
             
             if (i == 0) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
-                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5 - 0.25, 1, i + 0.5),
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
+                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
                     floor[FLOOR_SIZE - 1][i + 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 1 + 0.5),
                     glm::vec3(-1), glm::vec3(-1),
                     glm::vec3(-1), glm::vec3(-1),
@@ -315,7 +297,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 );
             }
             else if (i == FLOOR_SIZE - 1) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
                     floor[FLOOR_SIZE - 1][i - 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i - 1 + 0.5),
                     glm::vec3(-1), glm::vec3(-1),
@@ -328,7 +310,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 );
             }
             else {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
                     floor[FLOOR_SIZE - 1][i - 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i - 1 + 0.5),
                     floor[FLOOR_SIZE - 1][i + 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 1 + 0.5),
@@ -340,23 +322,14 @@ void Tema3::Update(float deltaTimeSeconds)
                     glm::vec3(-1), glm::vec3(-1)
                 );
             }
-
-            /*
-            modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5));
-            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
-            RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[FLOOR_SIZE - 1][i]);
-            */
         }
         {
             glm::mat4 modelMatrix = glm::mat4(1);
             modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 2, 0));
-            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 4, 0.1));
-            // RenderSimpleMesh_1Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5));
+
             if (i == 0) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
                     floor[i + 1][0], glm::vec3(i + 1 + 0.5, 0, 0 + 0.5),
                     glm::vec3(-1), glm::vec3(-1),
@@ -369,7 +342,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 );
             }
             else if (i == FLOOR_SIZE - 1) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
                     floor[i - 1][0], glm::vec3(i - 1 + 0.5, 0, 0 + 0.5),
                     glm::vec3(-1), glm::vec3(-1),
@@ -382,7 +355,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 );
             }
             else {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights"], modelMatrix,
+                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
                     floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
                     floor[i + 1][0], glm::vec3(i + 1 + 0.5, 0, 0 + 0.5),
                     floor[i - 1][0], glm::vec3(i - 1 + 0.5, 0, 0 + 0.5),
@@ -394,15 +367,6 @@ void Tema3::Update(float deltaTimeSeconds)
                     glm::vec3(-1), glm::vec3(-1)
                 );
             }
-            // RenderSimpleMesh_9Light(meshes["box"], shaders["OneLight"], modelMatrix, floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5));
-
-            /*
-            modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, 0 + 0.5));
-            // modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05, 0.05, 0.05));
-            RenderSimpleMesh_Floor(meshes["sphere"], shaders["FloorPlane"], modelMatrix, floor[i][0]);
-            */
         }
     }
 
