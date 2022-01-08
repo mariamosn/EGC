@@ -8,6 +8,12 @@
 
 #define FLOOR_SIZE 8
 #define DANCERS 5
+#define SPOTLIGHTS 4
+#define SPOT_HEIGHT 4
+#define SPOTLIGHT_ANGLE 15
+
+#define ON 1
+#define OFF 0
 
 namespace m1
 {
@@ -53,6 +59,7 @@ namespace m1
         void Generate_Floor();
         void Generate_Dancers();
         void MoveDancer(int i);
+        void Generate_Spotlights();
 
         std::unordered_map<std::string, Texture2D *> mapTextures;
 
@@ -72,10 +79,17 @@ namespace m1
 
         glm::vec3 floor[FLOOR_SIZE + 2][FLOOR_SIZE + 2];
 
+        glm::vec3 spot_colors[SPOTLIGHTS];
+        glm::vec3 spot_pos[SPOTLIGHTS];
+
         float x_dancers[DANCERS];
         float x_dir_dancers[DANCERS];
         float z_dancers[DANCERS];
         float z_dir_dancers[DANCERS];
-        float dancers_speed = 0.05;
+        float dancers_speed = 0.025;
+
+        int floorlights_mode;
+        int spotlights_mode;
+        int discolights_mode;
     };
 }   // namespace m1

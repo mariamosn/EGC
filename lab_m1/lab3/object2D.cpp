@@ -143,3 +143,41 @@ Mesh* object2D::CreateTriangle(
     triangle->InitFromData(vertices, indices);
     return triangle;
 }
+
+Mesh* object2D::CreateCone(
+    const std::string& name,
+    glm::vec3 center,
+    float radius,
+    float height,
+    glm::vec3 color)
+{
+
+    std::vector<VertexFormat> vertices;
+
+    int num_segments = 360;
+    vertices.push_back(VertexFormat(center));
+    for (int i = 0; i < num_segments; i++)
+    {
+        float theta = 2.0f * 3.1415926f * float(i) / float(num_segments);//get the current angle
+
+        float x = radius * cosf(theta);//calculate the x component
+        float y = radius * sinf(theta);//calculate the y component
+
+        vertices.push_back(VertexFormat(center + glm::vec3(x, -height, y), color));
+    }
+
+    Mesh* circle = new Mesh(name);
+    std::vector<unsigned int> indices;// = { 0, 1, 2, 3 };
+
+    for (int i = 1; i < num_segments - 1; i++) {
+        indices.push_back(0);
+        indices.push_back(i + 1);
+        indices.push_back(i);
+    }
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(num_segments - 1);
+
+    circle->InitFromData(vertices, indices);
+    return circle;
+}

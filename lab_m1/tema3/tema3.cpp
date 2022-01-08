@@ -1,4 +1,5 @@
 #include "lab_m1/tema3/tema3.h"
+#include "lab_m1/lab3/object2D.h"
 
 #include <vector>
 #include <string>
@@ -87,6 +88,10 @@ void Tema3::Init()
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "vegetation", "bamboo"), "bamboo.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
+    {
+        Mesh* mesh = object2D::CreateCone("cone", glm::vec3(0.0f), 1.0f, 1.0f, glm::vec3(1.0f));
+        meshes[mesh->GetMeshID()] = mesh;
+    }
 
     // Create a simple quad
     {
@@ -136,16 +141,16 @@ void Tema3::Init()
         shaders[shader->GetName()] = shader;
     }
     {
-        Shader* shader = new Shader("FloorPlane");
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_Plane.glsl"), GL_VERTEX_SHADER);
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_Plane.glsl"), GL_FRAGMENT_SHADER);
+        Shader* shader = new Shader("Floor");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_Floor.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_Floor.glsl"), GL_FRAGMENT_SHADER);
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
     {
-        Shader* shader = new Shader("FloorLight");
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_FloorLight.glsl"), GL_VERTEX_SHADER);
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_FloorLight.glsl"), GL_FRAGMENT_SHADER);
+        Shader* shader = new Shader("Spotlight");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_Spotlight.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_Spotlight.glsl"), GL_FRAGMENT_SHADER);
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
@@ -187,8 +192,13 @@ void Tema3::Init()
         angleOY = 0;
     }
 
+    spotlights_mode = OFF;
+    floorlights_mode = ON;
+    discolights_mode = OFF;
+
     Generate_Floor();
     Generate_Dancers();
+    Generate_Spotlights();
 }
 
 void Tema3::Generate_Floor() {
@@ -227,6 +237,29 @@ void Tema3::Generate_Dancers() {
     }
 }
 
+void Tema3::Generate_Spotlights() {
+    for (int i = 0; i < SPOTLIGHTS; i++) {
+        int a, b;
+        a = 2 + rand() % (FLOOR_SIZE - 1);
+        b = 2 + rand() % (FLOOR_SIZE - 1);
+        bool ok = true;
+        for (int j = 0; j < i && ok; j++) {
+            if (spot_pos[j] == glm::vec3(a, SPOT_HEIGHT, b)) {
+                ok = false;
+                i--;
+            }
+        }
+        if (ok) {
+            spot_pos[i] = glm::vec3(a, SPOT_HEIGHT, b);
+            float r, g, b;
+            r = (float)(rand() % 256) / 255;
+            g = (float)(rand() % 256) / 255;
+            b = (float)(rand() % 256) / 255;
+            spot_colors[i] = glm::vec3(r, g, b);
+        }
+    }
+}
+
 
 void Tema3::FrameStart()
 {
@@ -242,6 +275,7 @@ void Tema3::FrameStart()
 
 void Tema3::Update(float deltaTimeSeconds)
 {
+
     // floor
     for (int i = 1; i <= FLOOR_SIZE; i++) {
         for (int j = 1; j <= FLOOR_SIZE; j++) {
@@ -250,7 +284,7 @@ void Tema3::Update(float deltaTimeSeconds)
                 glm::mat4 modelMatrix = glm::mat4(1);
                 modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 0, j + 0.5));
                 modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 0.01, 1));
-                RenderSimpleMesh_Floor(meshes["box"], shaders["FloorPlane"], modelMatrix, floor[i][j]);
+                RenderSimpleMesh_Floor(meshes["box"], shaders["Floor"], modelMatrix, floor[i][j]);
             }
         }
     }
@@ -339,6 +373,37 @@ void Tema3::Update(float deltaTimeSeconds)
         RenderSimpleMesh(meshes["bamboo"], shaders["LabShader"], modelMatrix, mapTextures["bamboo"]);
     }
     */
+
+    // spotlights
+    if (spotlights_mode) {
+        for (int i = 0; i < SPOTLIGHTS; i++)
+        {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            // modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
+            modelMatrix = glm::translate(modelMatrix, spot_pos[i]);
+            float angle = SPOTLIGHT_ANGLE * 3.1415 / 180;
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(tan(angle) * SPOT_HEIGHT, 1 * SPOT_HEIGHT, tan(angle) * SPOT_HEIGHT));
+
+            // se vor desena doar fatetele fata
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+
+            // aceasta directiva este folosita pentru nu se scrie in depth buffer
+            glDepthMask(GL_FALSE);
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            // desenare conuri
+            // RenderMesh(meshes["cone"], shaders["Spotlight"], modelMatrix);
+            RenderSimpleMesh_Floor(meshes["cone"], shaders["Spotlight"], modelMatrix, spot_colors[i]);
+
+            // se dezactiveaza actiunile tuturor directivelor apelate anterior
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
+            glDisable(GL_CULL_FACE);
+        }
+    }
 }
 
 
@@ -398,6 +463,21 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
     // Render an object using the specified shader and the specified position
     glUseProgram(shader->program);
 
+    // Set eye position (camera position) uniform
+    glm::vec3 eyePosition = GetSceneCamera()->m_transform->GetWorldPosition();
+    int eye_position = glGetUniformLocation(shader->program, "eye_position");
+    glUniform3f(eye_position, eyePosition.x, eyePosition.y, eyePosition.z);
+
+    // Set material property uniforms (shininess, kd, ks, object color) 
+    int material_shininess = glGetUniformLocation(shader->program, "material_shininess");
+    glUniform1i(material_shininess, materialShininess);
+
+    int material_kd = glGetUniformLocation(shader->program, "material_kd");
+    glUniform1f(material_kd, materialKd);
+
+    int material_ks = glGetUniformLocation(shader->program, "material_ks");
+    glUniform1f(material_ks, materialKs);
+
     // TODO(student): Get shader location for uniform mat4 "Model"
     GLint model_loc = glGetUniformLocation(shader->GetProgramID(), "Model");
 
@@ -423,6 +503,21 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
 
     int object_color = glGetUniformLocation(shader->program, "object_color");
     glUniform3f(object_color, color.r, color.g, color.b);
+
+    GLuint spot_pos_loc = glGetUniformLocation(shader->program, "spotLightPos");
+    glUniform3fv(spot_pos_loc, SPOTLIGHTS, glm::value_ptr(spot_pos[0]));
+
+    GLuint spot_col_loc = glGetUniformLocation(shader->program, "spotLightCol");
+    glUniform3fv(spot_col_loc, SPOTLIGHTS, glm::value_ptr(spot_colors[0]));
+
+    int spot_loc = glGetUniformLocation(shader->program, "spot_mode");
+    glUniform1f(spot_loc, spotlights_mode);
+
+    int floor_loc = glGetUniformLocation(shader->program, "floor_mode");
+    glUniform1f(floor_loc, floorlights_mode);
+
+    int disco_loc = glGetUniformLocation(shader->program, "disco_mode");
+    glUniform1f(disco_loc, discolights_mode);
 
     // Draw the object
     glBindVertexArray(mesh->GetBuffers()->m_VAO);
@@ -576,6 +671,21 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
 
     int object9_color = glGetUniformLocation(shader->program, "object9_color");
     glUniform3f(object9_color, color9.r, color9.g, color9.b);
+
+    GLuint spot_pos_loc = glGetUniformLocation(shader->program, "spotLightPos");
+    glUniform3fv(spot_pos_loc, SPOTLIGHTS, glm::value_ptr(spot_pos[0]));
+
+    GLuint spot_col_loc = glGetUniformLocation(shader->program, "spotLightCol");
+    glUniform3fv(spot_col_loc, SPOTLIGHTS, glm::value_ptr(spot_colors[0]));
+
+    int spot_loc = glGetUniformLocation(shader->program, "spot_mode");
+    glUniform1f(spot_loc, spotlights_mode);
+
+    int floor_loc = glGetUniformLocation(shader->program, "floor_mode");
+    glUniform1f(floor_loc, floorlights_mode);
+
+    int disco_loc = glGetUniformLocation(shader->program, "disco_mode");
+    glUniform1f(disco_loc, discolights_mode);
  
     // Bind model matrix
     GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
@@ -702,7 +812,6 @@ Texture2D* Tema3::CreateRandomTexture(unsigned int width, unsigned int height)
     return texture;
 }
 
-
 /*
  *  These are callback functions. To find more about callbacks and
  *  how they behave, see `input_controller.h`.
@@ -724,6 +833,15 @@ void Tema3::OnInputUpdate(float deltaTime, int mods)
 void Tema3::OnKeyPress(int key, int mods)
 {
     // Add key press event
+    if (key == GLFW_KEY_Z) {
+        floorlights_mode = 1 - floorlights_mode;
+    }
+    if (key == GLFW_KEY_X) {
+        spotlights_mode = 1 - spotlights_mode;
+    }
+    if (key == GLFW_KEY_C) {
+        discolights_mode = 1 - discolights_mode;
+    }
 }
 
 
