@@ -7,6 +7,7 @@
 #include "components/transform.h"
 
 #define FLOOR_SIZE 8
+#define DANCERS 5
 
 namespace m1
 {
@@ -37,6 +38,7 @@ namespace m1
             const glm::vec3& color8, const glm::vec3& lightPosition8,
             const glm::vec3& color9, const glm::vec3& lightPosition9
         );
+        void RenderMeshCentered(int a, int b, const glm::mat4& modelMatrix);
         Texture2D *CreateRandomTexture(unsigned int width, unsigned int height);
 
         void OnInputUpdate(float deltaTime, int mods) override;
@@ -49,6 +51,8 @@ namespace m1
         void OnWindowResize(int width, int height) override;
 
         void Generate_Floor();
+        void Generate_Dancers();
+        void MoveDancer(int i);
 
         std::unordered_map<std::string, Texture2D *> mapTextures;
 
@@ -66,6 +70,12 @@ namespace m1
         GLfloat cutOff;
         GLfloat angleOX, angleOY;
 
-        glm::vec3 floor[FLOOR_SIZE][FLOOR_SIZE];
+        glm::vec3 floor[FLOOR_SIZE + 2][FLOOR_SIZE + 2];
+
+        float x_dancers[DANCERS];
+        float x_dir_dancers[DANCERS];
+        float z_dancers[DANCERS];
+        float z_dir_dancers[DANCERS];
+        float dancers_speed = 0.05;
     };
 }   // namespace m1

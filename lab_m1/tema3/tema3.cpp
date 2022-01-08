@@ -28,7 +28,7 @@ void Tema3::Init()
 {
     glm::ivec2 resolution = window->GetResolution();
     auto camera = GetSceneCamera();
-    camera->SetPosition(glm::vec3(4, 5, 12));
+    camera->SetPosition(glm::vec3(5, 5, 13));
     camera->SetRotation(glm::vec3(-0.4, 0, 0));
     camera->Update();
 
@@ -176,11 +176,10 @@ void Tema3::Init()
 
     // Light & material properties
     {
-        // lightPosition = glm::vec3(0, 1, 1);
         lightDirection = glm::vec3(0, -1, 0);
         materialShininess = 30;
-        materialKd = 0.5;
-        materialKs = 0.5;
+        materialKd = 1;
+        materialKs = 0.25;
 
         isSpotlight = 0;
         cutOff = 45;
@@ -189,16 +188,41 @@ void Tema3::Init()
     }
 
     Generate_Floor();
+    Generate_Dancers();
 }
 
 void Tema3::Generate_Floor() {
-    for (int i = 0; i < FLOOR_SIZE; i++) {
-        for (int j = 0; j < FLOOR_SIZE; j++) {
+    for (int i = 0; i <= FLOOR_SIZE + 1; i++) {
+        for (int j = 0; j <= FLOOR_SIZE + 1; j++) {
             float r, g, b;
-            r = (float)(rand() % 256) / 255;
-            g = (float)(rand() % 256) / 255;
-            b = (float)(rand() % 256) / 255;
+            if (!i || !j || i == FLOOR_SIZE + 1 || j == FLOOR_SIZE + 1) {
+                r = g = b = -1;
+            }
+            else {
+                r = (float)(rand() % 256) / 255;
+                g = (float)(rand() % 256) / 255;
+                b = (float)(rand() % 256) / 255;
+            }
             floor[i][j] = glm::vec3(r, g, b);
+        }
+    }
+}
+
+void Tema3::Generate_Dancers() {
+    for (int i = 0; i < DANCERS; i++) {
+        int a, b;
+        a = 1 + rand() % FLOOR_SIZE;
+        b = 1 + rand() % FLOOR_SIZE;
+        bool ok = true;
+        for (int j = 0; j < i && ok; j++) {
+            if (x_dancers[j] == a && z_dancers[j] == b) {
+                ok = false;
+                i--;
+            }
+        }
+        if (ok) {
+            x_dancers[i] = a;
+            z_dancers[i] = b;
         }
     }
 }
@@ -219,8 +243,8 @@ void Tema3::FrameStart()
 void Tema3::Update(float deltaTimeSeconds)
 {
     // floor
-    for (int i = 0; i < FLOOR_SIZE; i++) {
-        for (int j = 0; j < FLOOR_SIZE; j++) {
+    for (int i = 1; i <= FLOOR_SIZE; i++) {
+        for (int j = 1; j <= FLOOR_SIZE; j++) {
             // floor tile
             {
                 glm::mat4 modelMatrix = glm::mat4(1);
@@ -232,142 +256,45 @@ void Tema3::Update(float deltaTimeSeconds)
     }
 
     // walls
-    for (int i = 0; i < FLOOR_SIZE; i++) {
+    for (int i = 1; i <= FLOOR_SIZE; i++) {
         {
             glm::mat4 modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 2, i + 0.5));
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(1, 2, i + 0.5));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
 
-            if (i == 0) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
-                    floor[0][i + 1], glm::vec3(0 + 0.5, 0, i + 1 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
-            else if (i == FLOOR_SIZE - 1) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
-                    floor[0][i - 1], glm::vec3(0 + 0.5, 0, i - 1 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
-            else {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[0][i], glm::vec3(0 + 0.5, 0, i + 0.5),
-                    floor[0][i - 1], glm::vec3(0 + 0.5, 0, i - 1 + 0.5),
-                    floor[0][i + 1], glm::vec3(0 + 0.5, 0, i + 1 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
+            int a = 1, b = i;
+            RenderMeshCentered(a, b, modelMatrix);
         }
         {
             glm::mat4 modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE, 2, i + 0.5));
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE + 1, 2, i + 0.5));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
             
-            if (i == 0) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
-                    floor[FLOOR_SIZE - 1][i + 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 1 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
-            else if (i == FLOOR_SIZE - 1) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
-                    floor[FLOOR_SIZE - 1][i - 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i - 1 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
-            else {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[FLOOR_SIZE - 1][i], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 0.5),
-                    floor[FLOOR_SIZE - 1][i - 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i - 1 + 0.5),
-                    floor[FLOOR_SIZE - 1][i + 1], glm::vec3(FLOOR_SIZE - 1 + 0.5, 0, i + 1 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
+            int a = FLOOR_SIZE, b = i;
+            RenderMeshCentered(a, b, modelMatrix);
         }
         {
             glm::mat4 modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 2, 0));
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 2, 1));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 4, 0.1));
 
-            if (i == 0) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
-                    floor[i + 1][0], glm::vec3(i + 1 + 0.5, 0, 0 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
-            else if (i == FLOOR_SIZE - 1) {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
-                    floor[i - 1][0], glm::vec3(i - 1 + 0.5, 0, 0 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
-            else {
-                RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-                    floor[i][0], glm::vec3(i + 0.5, 0, 0 + 0.5),
-                    floor[i + 1][0], glm::vec3(i + 1 + 0.5, 0, 0 + 0.5),
-                    floor[i - 1][0], glm::vec3(i - 1 + 0.5, 0, 0 + 0.5),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1),
-                    glm::vec3(-1), glm::vec3(-1)
-                );
-            }
+            int a = i, b = 1;
+            RenderMeshCentered(a, b, modelMatrix);
         }
+    }
+
+    // dancers
+    for (int i = 0; i < DANCERS; i++) {
+        {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(x_dancers[i] + 0.5, 0.5, z_dancers[i] + 0.5));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5, 1, 0.5));
+
+            int a = x_dancers[i], b = z_dancers[i];
+            RenderMeshCentered(a, b, modelMatrix);
+        }
+
+        MoveDancer(i);
     }
 
     /*
@@ -418,6 +345,49 @@ void Tema3::Update(float deltaTimeSeconds)
 void Tema3::FrameEnd()
 {
     DrawCoordinateSystem();
+}
+
+void Tema3::MoveDancer(int i) {
+    if (x_dir_dancers[i] < -1 || x_dir_dancers[i] > 1 ||
+        x_dancers[i] + x_dir_dancers[i] < 1 || x_dancers[i] + x_dir_dancers[i] > FLOOR_SIZE ||
+        z_dir_dancers[i] < -1 || z_dir_dancers[i] > 1 ||
+        z_dancers[i] + z_dir_dancers[i] < 1 || z_dancers[i] + z_dir_dancers[i] > FLOOR_SIZE) {
+        // change direction
+        int x_movement = rand() % 2;
+        if (x_movement == 0) {
+            x_dir_dancers[i] = -(float)(rand() % 1000) / 999;
+        }
+        else {
+            x_dir_dancers[i] = (float)(rand() % 1000) / 999;
+        }
+
+        int z_movement = rand() % 2;
+        if (z_movement == 0) {
+            z_dir_dancers[i] = -(float)(rand() % 1000) / 999;
+        }
+        else {
+            z_dir_dancers[i] = (float)(rand() % 1000) / 999;
+        }
+    }
+    else {
+        // keep direction
+        x_dancers[i] += x_dir_dancers[i] * dancers_speed;
+        z_dancers[i] += z_dir_dancers[i] * dancers_speed;
+    }
+}
+
+void Tema3::RenderMeshCentered(int a, int b, const glm::mat4& modelMatrix) {
+    RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
+        floor[a][b], glm::vec3(a + 0.5, 0, b + 0.5),
+        floor[a][b + 1], glm::vec3(a + 0.5, 0, b + 1 + 0.5),
+        floor[a][b - 1], glm::vec3(a + 0.5, 0, b - 1 + 0.5),
+        floor[a + 1][b], glm::vec3(a + 1 + 0.5, 0, b + 0.5),
+        floor[a + 1][b + 1], glm::vec3(a + 1 + 0.5, 0, b + 1 + 0.5),
+        floor[a + 1][b - 1], glm::vec3(a + 1 + 0.5, 0, b - 1 + 0.5),
+        floor[a - 1][b], glm::vec3(a - 1 + 0.5, 0, b + 0.5),
+        floor[a - 1][b + 1], glm::vec3(a - 1 + 0.5, 0, b + 1 + 0.5),
+        floor[a - 1][b - 1], glm::vec3(a - 1 + 0.5, 0, b - 1 + 0.5)
+    );
 }
 
 void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color)
