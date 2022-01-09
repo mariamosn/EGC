@@ -14,7 +14,6 @@ uniform mat4 Projection;
 out vec3 world_position;
 out vec3 world_normal;
 
-
 void main()
 {
     // TODO(student): Compute world space vertex position and normal,

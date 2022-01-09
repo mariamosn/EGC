@@ -94,6 +94,8 @@ namespace m1
         float spot_angle_x_step[SPOTLIGHTS];
         float spot_angle_z_step[SPOTLIGHTS];
 
+        glm::vec3 disco_ball;
+
         float x_dancers[DANCERS];
         float x_dir_dancers[DANCERS];
         float z_dancers[DANCERS];
@@ -103,5 +105,7 @@ namespace m1
         int floorlights_mode;
         int spotlights_mode;
         int discolights_mode;
+
+        int state;
     };
 }   // namespace m1

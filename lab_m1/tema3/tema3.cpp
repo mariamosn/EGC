@@ -29,8 +29,8 @@ void Tema3::Init()
 {
     glm::ivec2 resolution = window->GetResolution();
     auto camera = GetSceneCamera();
-    camera->SetPosition(glm::vec3(5, 5, 13));
-    camera->SetRotation(glm::vec3(-0.4, 0, 0));
+    camera->SetPosition(glm::vec3(5, 2, 12));
+    camera->SetRotation(glm::vec3(0, 0, 0));
     camera->Update();
 
     const string sourceTextureDir = PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "textures");
@@ -61,7 +61,7 @@ void Tema3::Init()
     }
 
     {
-        mapTextures["random"] = CreateRandomTexture(25, 25);
+        mapTextures["random"] = CreateRandomTexture(16, 16);
     }
 
     // Load meshes
@@ -192,9 +192,12 @@ void Tema3::Init()
         angleOY = 0;
     }
 
-    spotlights_mode = OFF;
+    state = 0;
+    spotlights_mode = ON;
     floorlights_mode = ON;
-    discolights_mode = OFF;
+    discolights_mode = ON;
+
+    disco_ball = glm::vec3(5, 3, 5);
 
     Generate_Floor();
     Generate_Dancers();
@@ -378,48 +381,23 @@ void Tema3::Update(float deltaTimeSeconds)
         MoveDancer(i);
     }
 
-    /*
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(1, 1, -3));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(2));
-        earth = true;
-        RenderSimpleMesh(meshes["sphere"], shaders["LabShader"], modelMatrix, mapTextures["earth"]);
-        earth = false;
+    // disco ball
+    if (discolights_mode) {
+        {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, disco_ball);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(2));
+            RenderSimpleMesh(meshes["sphere"], shaders["LabShader"], modelMatrix, mapTextures["random"]);
+        }
     }
 
+    // ceiling
     {
         glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(2, 0.5f, 0));
-        modelMatrix = glm::rotate(modelMatrix, RADIANS(60.0f), glm::vec3(1, 0, 0));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.75f));
-        RenderSimpleMesh(meshes["box"], shaders["LabShader"], modelMatrix, mapTextures["crate"]);
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(1 + FLOOR_SIZE / 2, SPOT_HEIGHT, 1 + FLOOR_SIZE / 2));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(FLOOR_SIZE, 0.01, FLOOR_SIZE));
+        RenderSimpleMesh_Floor(meshes["box"], shaders["Floor"], modelMatrix, glm::vec3(0));
     }
-
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(-2, 0.5f, 0));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.75f));
-        modelMatrix = glm::rotate(modelMatrix, RADIANS(75.0f), glm::vec3(1, 1, 0));
-        RenderSimpleMesh(meshes["box"], shaders["LabShader"], modelMatrix, mapTextures["random"]);
-    }
-
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.5f, 0.0f));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f));
-        mix = true;
-        RenderSimpleMesh(meshes["square"], shaders["LabShader"], modelMatrix, mapTextures["grass"], mapTextures["crate"]);
-        mix = false;
-    }
-
-    {
-        glm::mat4 modelMatrix = glm::mat4(1);
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(-2, -0.5f, -3));
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
-        RenderSimpleMesh(meshes["bamboo"], shaders["LabShader"], modelMatrix, mapTextures["bamboo"]);
-    }
-    */
 
     // spotlights
     if (spotlights_mode) {
@@ -444,7 +422,6 @@ void Tema3::Update(float deltaTimeSeconds)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             // desenare conuri
-            // RenderMesh(meshes["cone"], shaders["Spotlight"], modelMatrix);
             RenderSimpleMesh_Floor(meshes["cone"], shaders["Spotlight"], modelMatrix, spot_colors[i]);
 
             // se dezactiveaza actiunile tuturor directivelor apelate anterior
@@ -570,6 +547,19 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
 
     int disco_loc = glGetUniformLocation(shader->program, "disco_mode");
     glUniform1f(disco_loc, discolights_mode);
+
+    GLuint disco_pos_loc = glGetUniformLocation(shader->program, "disco_pos");
+    glUniform3f(disco_pos_loc, disco_ball.x, disco_ball.y, disco_ball.z);
+
+    GLint loc_time = glGetUniformLocation(shader->program, "time");
+    glUniform1f(loc_time, (GLfloat)Engine::GetElapsedTime());
+
+    // - activate texture location 0
+    glActiveTexture(GL_TEXTURE0);
+    // - bind the texture1 ID
+    glBindTexture(GL_TEXTURE_2D, mapTextures["random"]->GetTextureID());
+    // - send theuniform value
+    glUniform1i(glGetUniformLocation(shader->program, "gen_texture"), 0);
 
     // Draw the object
     glBindVertexArray(mesh->GetBuffers()->m_VAO);
@@ -741,6 +731,19 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
 
     int disco_loc = glGetUniformLocation(shader->program, "disco_mode");
     glUniform1f(disco_loc, discolights_mode);
+
+    GLuint disco_pos_loc = glGetUniformLocation(shader->program, "disco_pos");
+    glUniform3f(disco_pos_loc, disco_ball.x, disco_ball.y, disco_ball.z);
+
+    GLint loc_time = glGetUniformLocation(shader->program, "time");
+    glUniform1f(loc_time, (GLfloat)Engine::GetElapsedTime());
+
+    // - activate texture location 0
+    glActiveTexture(GL_TEXTURE0);
+    // - bind the texture1 ID
+    glBindTexture(GL_TEXTURE_2D, mapTextures["random"]->GetTextureID());
+    // - send theuniform value
+    glUniform1i(glGetUniformLocation(shader->program, "gen_texture"), 0);
  
     // Bind model matrix
     GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
@@ -785,10 +788,10 @@ void Tema3::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & model
     glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
     // TODO(student): Set any other shader uniforms that you need
-
+    /*
     glUniform1i(glGetUniformLocation(shader->program, "mix_tex"), mix);
     glUniform1i(glGetUniformLocation(shader->program, "earth"), earth);
-
+    */
     GLint loc_time = glGetUniformLocation(shader->program, "time");
     glUniform1f(loc_time, (GLfloat)Engine::GetElapsedTime());
 
@@ -843,10 +846,10 @@ Texture2D* Tema3::CreateRandomTexture(unsigned int width, unsigned int height)
     if (GLEW_EXT_texture_filter_anisotropic) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4);
     }
-    // TODO(student): Set the texture parameters (MIN_FILTER, MAG_FILTER and WRAPPING MODE) using glTexParameteri
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    // Set the texture parameters (MIN_FILTER, MAG_FILTER and WRAPPING MODE) using glTexParameteri
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     CheckOpenGLError();
@@ -883,6 +886,7 @@ void Tema3::OnInputUpdate(float deltaTime, int mods)
         forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
     }
 
+    /*
     if (window->KeyHold(GLFW_KEY_LEFT)) {
         spot_angle_z[0] -= deltaTime;
     }
@@ -895,6 +899,7 @@ void Tema3::OnInputUpdate(float deltaTime, int mods)
     if (window->KeyHold(GLFW_KEY_DOWN)) {
         spot_angle_x[0] -= deltaTime;
     }
+    */
 }
 
 
@@ -909,6 +914,33 @@ void Tema3::OnKeyPress(int key, int mods)
     }
     if (key == GLFW_KEY_C) {
         discolights_mode = 1 - discolights_mode;
+    }
+
+    if (key == GLFW_KEY_SPACE) {
+        if (state == 0) {
+            state++;
+            floorlights_mode = ON;
+            spotlights_mode = OFF;
+            discolights_mode = OFF;
+        }
+        else if (state == 1) {
+            state++;
+            floorlights_mode = OFF;
+            spotlights_mode = ON;
+            discolights_mode = OFF;
+        }
+        else if (state == 2) {
+            state++;
+            floorlights_mode = OFF;
+            spotlights_mode = OFF;
+            discolights_mode = ON;
+        }
+        else if (state == 3) {
+            state = 0;
+            floorlights_mode = ON;
+            spotlights_mode = ON;
+            discolights_mode = ON;
+        }
     }
 }
 
