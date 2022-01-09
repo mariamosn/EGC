@@ -24,5 +24,11 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    out_color = vec4(object_color, 0.5);
+    out_color = vec4(object_color, 0);
+    if (world_position.y >= 0 &&
+        world_position.x >= 1 && world_position.x <= 9 &&
+        world_position.z >= 1 &&
+        world_position.y <= 4) {
+        out_color = vec4(object_color, 0.25);
+    }
 }

@@ -7,6 +7,7 @@ in vec3 world_normal;
 // Uniforms for light properties
 uniform vec3 spotLightPos[4];
 uniform vec3 spotLightCol[4];
+uniform vec3 spotLightDir[4];
 
 uniform vec3 eye_position;
 uniform float material_kd;
@@ -22,7 +23,7 @@ uniform vec3 object_color;
 // Output
 layout(location = 0) out vec4 out_color;
 
-vec3 SpotLightContribution(vec3 lightPos, vec3 lightColor);
+vec3 SpotLightContribution(vec3 lightPos, vec3 lightColor, vec3 light_direction);
 
 void main()
 {
@@ -35,14 +36,14 @@ void main()
 
     if (spot_mode == 1) {
         for (int i = 0; i < 4; i++) {
-            color = color + SpotLightContribution(spotLightPos[i], spotLightCol[i]);
+            color = color + SpotLightContribution(spotLightPos[i], spotLightCol[i], spotLightDir[i]);
         }
     }
 
     out_color = vec4(color, 1.f);
 }
 
-vec3 SpotLightContribution(vec3 lightPos, vec3 lightColor)
+vec3 SpotLightContribution(vec3 lightPos, vec3 lightColor, vec3 light_direction)
 {
     vec3 col;
     col = vec3(0);
@@ -68,7 +69,7 @@ vec3 SpotLightContribution(vec3 lightPos, vec3 lightColor)
         float attenuation_factor = 0;
         
         float cutoff_angle = radians(15);
-        vec3 light_direction = vec3(0, -1, 0);
+        // vec3 light_direction = vec3(0, -1, 0);
         float spot_light = dot(-L, light_direction);
         float spot_light_limit = cos(cutoff_angle);
 

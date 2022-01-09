@@ -237,6 +237,32 @@ void Tema3::Generate_Dancers() {
     }
 }
 
+void Tema3::GetNewSpotDir(int i, float deltaTimeSeconds) {
+    int aux;
+    
+    aux = rand() % 3;
+    if (aux == 0) {
+        spot_angle_x_step[i] = -deltaTimeSeconds;
+    }
+    else if (aux == 0) {
+        spot_angle_x_step[i] = 0;
+    }
+    else {
+        spot_angle_x_step[i] = deltaTimeSeconds;
+    }
+
+    aux = rand() % 3;
+    if (aux == 0) {
+        spot_angle_z_step[i] = -deltaTimeSeconds;
+    }
+    else if (aux == 0) {
+        spot_angle_z_step[i] = 0;
+    }
+    else {
+        spot_angle_z_step[i] = deltaTimeSeconds;
+    }
+}
+
 void Tema3::Generate_Spotlights() {
     for (int i = 0; i < SPOTLIGHTS; i++) {
         int a, b;
@@ -256,6 +282,9 @@ void Tema3::Generate_Spotlights() {
             g = (float)(rand() % 256) / 255;
             b = (float)(rand() % 256) / 255;
             spot_colors[i] = glm::vec3(r, g, b);
+            spot_dir[i] = glm::vec3(0, -1, 0);
+            spot_angle_x[i] = 0;
+            spot_angle_z[i] = 0;
         }
     }
 }
@@ -275,6 +304,24 @@ void Tema3::FrameStart()
 
 void Tema3::Update(float deltaTimeSeconds)
 {
+    // update spotlights direction
+    for (int i = 0; i < SPOTLIGHTS; i++) {
+        while((double)spot_angle_x[i] + (double)spot_angle_x_step[i] * SPOT_SPEED <= SPOT_ANGLE_LIMIT_MIN ||
+            (double)spot_angle_x[i] + (double)spot_angle_x_step[i] * SPOT_SPEED >= SPOT_ANGLE_LIMIT_MAX ||
+            (double)spot_angle_z[i] + (double)spot_angle_z_step[i] * SPOT_SPEED <= SPOT_ANGLE_LIMIT_MIN ||
+            (double)spot_angle_z[i] + (double)spot_angle_z_step[i] * SPOT_SPEED >= SPOT_ANGLE_LIMIT_MAX) {
+                GetNewSpotDir(i, deltaTimeSeconds);
+        }
+
+        spot_angle_x[i] += spot_angle_x_step[i] * SPOT_SPEED;
+        spot_angle_z[i] += spot_angle_z_step[i] * SPOT_SPEED;
+
+        glm::mat4 rot = glm::mat4(1);
+        rot = glm::rotate(rot, RADIANS(spot_angle_x[i]), glm::vec3(1, 0, 0));
+        rot = glm::rotate(rot, RADIANS(spot_angle_z[i]), glm::vec3(0, 0, 1));
+        spot_dir[i] = glm::vec3(0, -1, 0);
+        spot_dir[i] = glm::vec3(rot * glm::vec4(spot_dir[i], 0));
+    }
 
     // floor
     for (int i = 1; i <= FLOOR_SIZE; i++) {
@@ -381,8 +428,10 @@ void Tema3::Update(float deltaTimeSeconds)
             glm::mat4 modelMatrix = glm::mat4(1);
             // modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
             modelMatrix = glm::translate(modelMatrix, spot_pos[i]);
+            modelMatrix = glm::rotate(modelMatrix, RADIANS(spot_angle_x[i]), glm::vec3(1, 0, 0));
+            modelMatrix = glm::rotate(modelMatrix, RADIANS(spot_angle_z[i]), glm::vec3(0, 0, 1));
             float angle = SPOTLIGHT_ANGLE * 3.1415 / 180;
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(tan(angle) * SPOT_HEIGHT, 1 * SPOT_HEIGHT, tan(angle) * SPOT_HEIGHT));
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(tan(angle) * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT), 1 * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT), tan(angle) * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT)));
 
             // se vor desena doar fatetele fata
             glEnable(GL_CULL_FACE);
@@ -509,6 +558,9 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
 
     GLuint spot_col_loc = glGetUniformLocation(shader->program, "spotLightCol");
     glUniform3fv(spot_col_loc, SPOTLIGHTS, glm::value_ptr(spot_colors[0]));
+
+    GLuint spot_dir_loc = glGetUniformLocation(shader->program, "spotLightDir");
+    glUniform3fv(spot_dir_loc, SPOTLIGHTS, glm::value_ptr(spot_dir[0]));
 
     int spot_loc = glGetUniformLocation(shader->program, "spot_mode");
     glUniform1f(spot_loc, spotlights_mode);
@@ -678,6 +730,9 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
     GLuint spot_col_loc = glGetUniformLocation(shader->program, "spotLightCol");
     glUniform3fv(spot_col_loc, SPOTLIGHTS, glm::value_ptr(spot_colors[0]));
 
+    GLuint spot_dir_loc = glGetUniformLocation(shader->program, "spotLightDir");
+    glUniform3fv(spot_dir_loc, SPOTLIGHTS, glm::value_ptr(spot_dir[0]));
+
     int spot_loc = glGetUniformLocation(shader->program, "spot_mode");
     glUniform1f(spot_loc, spotlights_mode);
 
@@ -826,6 +881,19 @@ void Tema3::OnInputUpdate(float deltaTime, int mods)
         glm::vec3 right = GetSceneCamera()->m_transform->GetLocalOXVector();
         glm::vec3 forward = GetSceneCamera()->m_transform->GetLocalOZVector();
         forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
+    }
+
+    if (window->KeyHold(GLFW_KEY_LEFT)) {
+        spot_angle_z[0] -= deltaTime;
+    }
+    if (window->KeyHold(GLFW_KEY_RIGHT)) {
+        spot_angle_z[0] += deltaTime;
+    }
+    if (window->KeyHold(GLFW_KEY_UP)) {
+        spot_angle_x[0] += deltaTime;
+    }
+    if (window->KeyHold(GLFW_KEY_DOWN)) {
+        spot_angle_x[0] -= deltaTime;
     }
 }
 

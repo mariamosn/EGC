@@ -10,7 +10,13 @@
 #define DANCERS 5
 #define SPOTLIGHTS 4
 #define SPOT_HEIGHT 4
+#define SPOT_EXTRA_HEIGHT 5
 #define SPOTLIGHT_ANGLE 15
+// #define SPOT_ANGLE_LIMIT_MIN -1.4
+// #define SPOT_ANGLE_LIMIT_MAX 1.4
+#define SPOT_ANGLE_LIMIT_MIN -10
+#define SPOT_ANGLE_LIMIT_MAX 10
+#define SPOT_SPEED 6
 
 #define ON 1
 #define OFF 0
@@ -60,6 +66,7 @@ namespace m1
         void Generate_Dancers();
         void MoveDancer(int i);
         void Generate_Spotlights();
+        void GetNewSpotDir(int i, float deltaTimeSeconds);
 
         std::unordered_map<std::string, Texture2D *> mapTextures;
 
@@ -81,6 +88,11 @@ namespace m1
 
         glm::vec3 spot_colors[SPOTLIGHTS];
         glm::vec3 spot_pos[SPOTLIGHTS];
+        glm::vec3 spot_dir[SPOTLIGHTS];
+        float spot_angle_x[SPOTLIGHTS];
+        float spot_angle_z[SPOTLIGHTS];
+        float spot_angle_x_step[SPOTLIGHTS];
+        float spot_angle_z_step[SPOTLIGHTS];
 
         float x_dancers[DANCERS];
         float x_dir_dancers[DANCERS];
