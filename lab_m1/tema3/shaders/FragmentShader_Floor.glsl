@@ -76,9 +76,7 @@ vec3 SpotLightContribution(vec3 lightPos, vec3 lightColor, vec3 light_direction)
 
         float intensity = 0;
         float attenuation_factor = 0;
-        
         float cutoff_angle = radians(15);
-        // vec3 light_direction = vec3(0, -1, 0);
         float spot_light = dot(-L, light_direction);
         float spot_light_limit = cos(cutoff_angle);
 
@@ -118,23 +116,18 @@ vec3 DiscoLightContribution()
 
     float intensity = 0;
     float attenuation_factor = 0;
-    
     float cutoff_angle = radians(15);
 
-    // vec3 light_direction = vec3(0, -1, 0);
     vec3 light_direction = world_position - disco_pos;
 
     // texcoord este coordonata de textura utilizata pentru esantionare
     vec2 texcoord;
     texcoord.x = (1.0 / (2 * 3.14159)) * (atan (light_direction.x, light_direction.z) + 3.14159);
     texcoord.y = (1.0 / 3.14159) * acos (light_direction.y / length (light_direction));
-
     texcoord = vec2(texcoord.x + time / 10, texcoord.y);
 
-    // lightColor este culoarea corespunzatoare pozitiei world_position
-    // vec3 lightColor = texture2D(gen_texture, texcoord).xyz;
+    // lightColor -> world_position
     vec3 lightColor = texture(gen_texture, texcoord).xyz;
-    // vec3 lightColor = vec3(1);
 
     float spot_light = dot(-L, light_direction);
     float spot_light_limit = cos(cutoff_angle);
@@ -144,7 +137,6 @@ vec3 DiscoLightContribution()
         attenuation_factor = pow(linear_att, 2);
     }
 
-    // intensity = ambient_light + attenuation_factor * (diffuse_light + specular_light);
     intensity = 0.5;
 
     // Write pixel out color

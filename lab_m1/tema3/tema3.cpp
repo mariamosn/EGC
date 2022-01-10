@@ -27,6 +27,7 @@ Tema3::~Tema3()
 
 void Tema3::Init()
 {
+    // Set camera
     glm::ivec2 resolution = window->GetResolution();
     auto camera = GetSceneCamera();
     camera->SetPosition(glm::vec3(5, 2, 12));
@@ -37,30 +38,6 @@ void Tema3::Init()
 
     // Load textures
     {
-        Texture2D* texture = new Texture2D();
-        texture->Load2D(PATH_JOIN(sourceTextureDir, "grass_bilboard.png").c_str(), GL_REPEAT);
-        mapTextures["grass"] = texture;
-    }
-
-    {
-        Texture2D* texture = new Texture2D();
-        texture->Load2D(PATH_JOIN(sourceTextureDir, "crate.jpg").c_str(), GL_REPEAT);
-        mapTextures["crate"] = texture;
-    }
-
-    {
-        Texture2D* texture = new Texture2D();
-        texture->Load2D(PATH_JOIN(sourceTextureDir, "earth.png").c_str(), GL_REPEAT);
-        mapTextures["earth"] = texture;
-    }
-
-    {
-        Texture2D* texture = new Texture2D();
-        texture->Load2D(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "vegetation", "bamboo", "bamboo.png").c_str(), GL_REPEAT);
-        mapTextures["bamboo"] = texture;
-    }
-
-    {
         mapTextures["random"] = CreateRandomTexture(16, 16);
     }
 
@@ -70,73 +47,36 @@ void Tema3::Init()
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "box.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
-
     {
         Mesh* mesh = new Mesh("sphere");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "sphere.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
-
     {
         Mesh* mesh = new Mesh("plane");
         mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "primitives"), "plane50.obj");
-        meshes[mesh->GetMeshID()] = mesh;
-    }
-
-    {
-        Mesh* mesh = new Mesh("bamboo");
-        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "vegetation", "bamboo"), "bamboo.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
     {
         Mesh* mesh = object2D::CreateCone("cone", glm::vec3(0.0f), 1.0f, 1.0f, glm::vec3(1.0f));
         meshes[mesh->GetMeshID()] = mesh;
     }
-
-    // Create a simple quad
     {
-        vector<glm::vec3> vertices
-        {
-            glm::vec3(0.5f,   0.5f, 0.0f),    // top right
-            glm::vec3(0.5f,  -0.5f, 0.0f),    // bottom right
-            glm::vec3(-0.5f, -0.5f, 0.0f),    // bottom left
-            glm::vec3(-0.5f,  0.5f, 0.0f),    // top left
-        };
-
-        vector<glm::vec3> normals
-        {
-            glm::vec3(0, 1, 1),
-            glm::vec3(1, 0, 1),
-            glm::vec3(1, 0, 0),
-            glm::vec3(0, 1, 0)
-        };
-
-        vector<glm::vec2> textureCoords
-        {
-            // TODO(student): Complete texture coordinates for the square
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(0.0f, 1.0f),
-            glm::vec2(1.0f, 1.0f),
-            glm::vec2(1.0f, 0.0f)
-
-        };
-
-        vector<unsigned int> indices =
-        {
-            0, 1, 3,
-            1, 2, 3
-        };
-
-        Mesh* mesh = new Mesh("square");
-        mesh->InitFromData(vertices, normals, textureCoords, indices);
+        Mesh* mesh = new Mesh("bunny");
+        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "animals"), "bunny.obj");
+        meshes[mesh->GetMeshID()] = mesh;
+    }
+    {
+        Mesh* mesh = new Mesh("pair");
+        mesh->LoadMesh(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::MODELS, "characters", "pair"), "pair.obj");
         meshes[mesh->GetMeshID()] = mesh;
     }
 
-    // Create a shader program for drawing face polygon with the color of the normal
+    // Load shaders
     {
-        Shader *shader = new Shader("LabShader");
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader.glsl"), GL_VERTEX_SHADER);
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader.glsl"), GL_FRAGMENT_SHADER);
+        Shader *shader = new Shader("DiscoBallShader");
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_Disco.glsl"), GL_VERTEX_SHADER);
+        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_Disco.glsl"), GL_FRAGMENT_SHADER);
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
@@ -155,42 +95,17 @@ void Tema3::Init()
         shaders[shader->GetName()] = shader;
     }
     {
-        Shader* shader = new Shader("OneLight");
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_1Light.glsl"), GL_VERTEX_SHADER);
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_1Light.glsl"), GL_FRAGMENT_SHADER);
-        shader->CreateAndLink();
-        shaders[shader->GetName()] = shader;
-    }
-    {
         Shader* shader = new Shader("NineLights");
         shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_9Lights.glsl"), GL_VERTEX_SHADER);
         shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_9Lights.glsl"), GL_FRAGMENT_SHADER);
         shader->CreateAndLink();
         shaders[shader->GetName()] = shader;
     }
-    {
-        Shader* shader = new Shader("NineLights_2");
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "VertexShader_9Lights_2.glsl"), GL_VERTEX_SHADER);
-        shader->AddShader(PATH_JOIN(window->props.selfDir, SOURCE_PATH::M1, "tema3", "shaders", "FragmentShader_9Lights_2.glsl"), GL_FRAGMENT_SHADER);
-        shader->CreateAndLink();
-        shaders[shader->GetName()] = shader;
-    }
-
-    mix = false;
-    earth = false;
 
     // Light & material properties
-    {
-        lightDirection = glm::vec3(0, -1, 0);
-        materialShininess = 30;
-        materialKd = 1;
-        materialKs = 0.25;
-
-        isSpotlight = 0;
-        cutOff = 45;
-        angleOX = 0;
-        angleOY = 0;
-    }
+    materialShininess = 30;
+    materialKd = 1;
+    materialKs = 0.25;
 
     state = 0;
     spotlights_mode = ON;
@@ -198,6 +113,11 @@ void Tema3::Init()
     discolights_mode = ON;
 
     disco_ball = glm::vec3(5, 3, 5);
+
+    character = BOX;
+
+    jump_cooldown = JUMP_COOLDOWN;
+    jumping_dancer = -1;
 
     Generate_Floor();
     Generate_Dancers();
@@ -307,24 +227,8 @@ void Tema3::FrameStart()
 
 void Tema3::Update(float deltaTimeSeconds)
 {
-    // update spotlights direction
-    for (int i = 0; i < SPOTLIGHTS; i++) {
-        while((double)spot_angle_x[i] + (double)spot_angle_x_step[i] * SPOT_SPEED <= SPOT_ANGLE_LIMIT_MIN ||
-            (double)spot_angle_x[i] + (double)spot_angle_x_step[i] * SPOT_SPEED >= SPOT_ANGLE_LIMIT_MAX ||
-            (double)spot_angle_z[i] + (double)spot_angle_z_step[i] * SPOT_SPEED <= SPOT_ANGLE_LIMIT_MIN ||
-            (double)spot_angle_z[i] + (double)spot_angle_z_step[i] * SPOT_SPEED >= SPOT_ANGLE_LIMIT_MAX) {
-                GetNewSpotDir(i, deltaTimeSeconds);
-        }
-
-        spot_angle_x[i] += spot_angle_x_step[i] * SPOT_SPEED;
-        spot_angle_z[i] += spot_angle_z_step[i] * SPOT_SPEED;
-
-        glm::mat4 rot = glm::mat4(1);
-        rot = glm::rotate(rot, RADIANS(spot_angle_x[i]), glm::vec3(1, 0, 0));
-        rot = glm::rotate(rot, RADIANS(spot_angle_z[i]), glm::vec3(0, 0, 1));
-        spot_dir[i] = glm::vec3(0, -1, 0);
-        spot_dir[i] = glm::vec3(rot * glm::vec4(spot_dir[i], 0));
-    }
+    // update the direction of the spotlights
+    UpdateSpotDir(deltaTimeSeconds);
 
     // floor
     for (int i = 1; i <= FLOOR_SIZE; i++) {
@@ -341,53 +245,32 @@ void Tema3::Update(float deltaTimeSeconds)
 
     // walls
     for (int i = 1; i <= FLOOR_SIZE; i++) {
+        // left wall
         {
             glm::mat4 modelMatrix = glm::mat4(1);
             modelMatrix = glm::translate(modelMatrix, glm::vec3(1, 2, i + 0.5));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
 
             int a = 1, b = i;
-            RenderMeshCentered(a, b, modelMatrix);
+            RenderMeshCentered(a, b, modelMatrix, meshes["box"]);
         }
+        // right wall
         {
             glm::mat4 modelMatrix = glm::mat4(1);
             modelMatrix = glm::translate(modelMatrix, glm::vec3(FLOOR_SIZE + 1, 2, i + 0.5));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 4, 1));
             
             int a = FLOOR_SIZE, b = i;
-            RenderMeshCentered(a, b, modelMatrix);
+            RenderMeshCentered(a, b, modelMatrix, meshes["box"]);
         }
+        // backside wall
         {
             glm::mat4 modelMatrix = glm::mat4(1);
             modelMatrix = glm::translate(modelMatrix, glm::vec3(i + 0.5, 2, 1));
             modelMatrix = glm::scale(modelMatrix, glm::vec3(1, 4, 0.1));
 
             int a = i, b = 1;
-            RenderMeshCentered(a, b, modelMatrix);
-        }
-    }
-
-    // dancers
-    for (int i = 0; i < DANCERS; i++) {
-        {
-            glm::mat4 modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, glm::vec3(x_dancers[i] + 0.5, 0.5, z_dancers[i] + 0.5));
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5, 1, 0.5));
-
-            int a = x_dancers[i], b = z_dancers[i];
-            RenderMeshCentered(a, b, modelMatrix);
-        }
-
-        MoveDancer(i);
-    }
-
-    // disco ball
-    if (discolights_mode) {
-        {
-            glm::mat4 modelMatrix = glm::mat4(1);
-            modelMatrix = glm::translate(modelMatrix, disco_ball);
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(2));
-            RenderSimpleMesh(meshes["sphere"], shaders["LabShader"], modelMatrix, mapTextures["random"]);
+            RenderMeshCentered(a, b, modelMatrix, meshes["box"]);
         }
     }
 
@@ -399,43 +282,91 @@ void Tema3::Update(float deltaTimeSeconds)
         RenderSimpleMesh_Floor(meshes["box"], shaders["Floor"], modelMatrix, glm::vec3(0));
     }
 
+    // dancers
+    if (jump_cooldown <= 0) {
+        jumping_dancer = rand() % DANCERS;
+        jump_cooldown = JUMP_COOLDOWN;
+        jump_height = 0;
+        jump_state = UP;
+    }
+    for (int i = 0; i < DANCERS; i++) {
+        {
+            int a = x_dancers[i] + 0.5, b = z_dancers[i] + 0.5;
+            glm::mat4 modelMatrix = glm::mat4(1);
+
+            if (i == jumping_dancer) {
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(0, jump_height, 0));
+            }
+
+            modelMatrix = glm::translate(modelMatrix, glm::vec3(x_dancers[i] + 0.5, 0.5, z_dancers[i] + 0.5));
+
+            if (character == BOX) {
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5, 1, 0.5));
+                RenderMeshCentered(a, b, modelMatrix, meshes["box"]);
+            }
+            else if (character == BUNNY) {
+                modelMatrix = glm::rotate(modelMatrix, RADIANS(i * (360 / DANCERS) % 360), glm::vec3(0, 1, 0));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.03, 0.03, 0.03));
+                RenderMeshCentered(a, b, modelMatrix, meshes["bunny"]);
+            }
+            else if (character == PAIR) {
+                modelMatrix = glm::translate(modelMatrix, glm::vec3(0, -0.5, 0));
+                modelMatrix = glm::rotate(modelMatrix, RADIANS(i * (360 / DANCERS) % 360), glm::vec3(0, 1, 0));
+                modelMatrix = glm::rotate(modelMatrix, RADIANS(-90), glm::vec3(1, 0, 0));
+                modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2, 0.2, 0.2));
+                RenderMeshCentered(a, b, modelMatrix, meshes["pair"]);
+            }
+        }
+
+        MoveDancer(i);
+    }
+
+    // disco ball
+    if (discolights_mode) {
+        {
+            glm::mat4 modelMatrix = glm::mat4(1);
+            modelMatrix = glm::translate(modelMatrix, disco_ball);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(2));
+            RenderSimpleMesh_DiscoBall(meshes["sphere"], shaders["DiscoBallShader"], modelMatrix, mapTextures["random"]);
+        }
+    }
+
     // spotlights
     if (spotlights_mode) {
         for (int i = 0; i < SPOTLIGHTS; i++)
         {
-            glm::mat4 modelMatrix = glm::mat4(1);
-            // modelMatrix = glm::translate(modelMatrix, glm::vec3(0, 0, 0));
-            modelMatrix = glm::translate(modelMatrix, spot_pos[i]);
-            modelMatrix = glm::rotate(modelMatrix, RADIANS(spot_angle_x[i]), glm::vec3(1, 0, 0));
-            modelMatrix = glm::rotate(modelMatrix, RADIANS(spot_angle_z[i]), glm::vec3(0, 0, 1));
-            float angle = SPOTLIGHT_ANGLE * 3.1415 / 180;
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(tan(angle) * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT), 1 * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT), tan(angle) * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT)));
-
-            // se vor desena doar fatetele fata
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
-
-            // aceasta directiva este folosita pentru nu se scrie in depth buffer
-            glDepthMask(GL_FALSE);
-
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            // desenare conuri
-            RenderSimpleMesh_Floor(meshes["cone"], shaders["Spotlight"], modelMatrix, spot_colors[i]);
-
-            // se dezactiveaza actiunile tuturor directivelor apelate anterior
-            glDepthMask(GL_TRUE);
-            glDisable(GL_BLEND);
-            glDisable(GL_CULL_FACE);
+            DrawSpotlight(i);
         }
     }
+
+    // jumping state update
+    UpdateJump(deltaTimeSeconds);
 }
 
 
 void Tema3::FrameEnd()
 {
     DrawCoordinateSystem();
+}
+
+void Tema3::UpdateSpotDir(float deltaTimeSeconds) {
+    for (int i = 0; i < SPOTLIGHTS; i++) {
+        while ((double)spot_angle_x[i] + (double)spot_angle_x_step[i] * SPOT_SPEED <= SPOT_ANGLE_LIMIT_MIN ||
+            (double)spot_angle_x[i] + (double)spot_angle_x_step[i] * SPOT_SPEED >= SPOT_ANGLE_LIMIT_MAX ||
+            (double)spot_angle_z[i] + (double)spot_angle_z_step[i] * SPOT_SPEED <= SPOT_ANGLE_LIMIT_MIN ||
+            (double)spot_angle_z[i] + (double)spot_angle_z_step[i] * SPOT_SPEED >= SPOT_ANGLE_LIMIT_MAX) {
+            GetNewSpotDir(i, deltaTimeSeconds);
+        }
+
+        spot_angle_x[i] += spot_angle_x_step[i] * SPOT_SPEED;
+        spot_angle_z[i] += spot_angle_z_step[i] * SPOT_SPEED;
+
+        glm::mat4 rot = glm::mat4(1);
+        rot = glm::rotate(rot, RADIANS(spot_angle_x[i]), glm::vec3(1, 0, 0));
+        rot = glm::rotate(rot, RADIANS(spot_angle_z[i]), glm::vec3(0, 0, 1));
+        spot_dir[i] = glm::vec3(0, -1, 0);
+        spot_dir[i] = glm::vec3(rot * glm::vec4(spot_dir[i], 0));
+    }
 }
 
 void Tema3::MoveDancer(int i) {
@@ -467,18 +398,54 @@ void Tema3::MoveDancer(int i) {
     }
 }
 
-void Tema3::RenderMeshCentered(int a, int b, const glm::mat4& modelMatrix) {
-    RenderSimpleMesh_9Lights(meshes["box"], shaders["NineLights_2"], modelMatrix,
-        floor[a][b], glm::vec3(a + 0.5, 0, b + 0.5),
-        floor[a][b + 1], glm::vec3(a + 0.5, 0, b + 1 + 0.5),
-        floor[a][b - 1], glm::vec3(a + 0.5, 0, b - 1 + 0.5),
-        floor[a + 1][b], glm::vec3(a + 1 + 0.5, 0, b + 0.5),
-        floor[a + 1][b + 1], glm::vec3(a + 1 + 0.5, 0, b + 1 + 0.5),
-        floor[a + 1][b - 1], glm::vec3(a + 1 + 0.5, 0, b - 1 + 0.5),
-        floor[a - 1][b], glm::vec3(a - 1 + 0.5, 0, b + 0.5),
-        floor[a - 1][b + 1], glm::vec3(a - 1 + 0.5, 0, b + 1 + 0.5),
-        floor[a - 1][b - 1], glm::vec3(a - 1 + 0.5, 0, b - 1 + 0.5)
-    );
+void Tema3::DrawSpotlight(int i) {
+    glm::mat4 modelMatrix = glm::mat4(1);
+    modelMatrix = glm::translate(modelMatrix, spot_pos[i]);
+    modelMatrix = glm::rotate(modelMatrix, RADIANS(spot_angle_x[i]), glm::vec3(1, 0, 0));
+    modelMatrix = glm::rotate(modelMatrix, RADIANS(spot_angle_z[i]), glm::vec3(0, 0, 1));
+    float angle = SPOTLIGHT_ANGLE * 3.1415 / 180;
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(tan(angle) * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT), 1 * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT), tan(angle) * (SPOT_HEIGHT + SPOT_EXTRA_HEIGHT)));
+
+    // draw only the front part
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    // don't write in the depth buffer
+    glDepthMask(GL_FALSE);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // draw cone
+    RenderSimpleMesh_Floor(meshes["cone"], shaders["Spotlight"], modelMatrix, spot_colors[i]);
+
+    // undo changes
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+}
+
+void Tema3::UpdateJump(float deltaTimeSeconds) {
+    if (jump_cooldown > 0) {
+        jump_cooldown--;
+    }
+
+    if (jump_state == UP) {
+        if (jump_height + deltaTimeSeconds <= JUMP_H) {
+            jump_height += deltaTimeSeconds;
+        }
+        else {
+            jump_state = DOWN;
+        }
+    }
+    else if (jump_state == DOWN) {
+        if (jump_height - deltaTimeSeconds >= 0) {
+            jump_height -= deltaTimeSeconds;
+        }
+        else {
+            jumping_dancer = -1;
+        }
+    }
 }
 
 void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color)
@@ -504,23 +471,23 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
     int material_ks = glGetUniformLocation(shader->program, "material_ks");
     glUniform1f(material_ks, materialKs);
 
-    // TODO(student): Get shader location for uniform mat4 "Model"
+    // Get shader location for uniform mat4 "Model"
     GLint model_loc = glGetUniformLocation(shader->GetProgramID(), "Model");
 
-    // TODO(student): Set shader uniform "Model" to modelMatrix
+    // Set shader uniform "Model" to modelMatrix
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-    // TODO(student): Get shader location for uniform mat4 "View"
+    // Get shader location for uniform mat4 "View"
     GLint view_loc = glGetUniformLocation(shader->GetProgramID(), "View");
 
-    // TODO(student): Set shader uniform "View" to viewMatrix
+    // Set shader uniform "View" to viewMatrix
     glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
-    // TODO(student): Get shader location for uniform mat4 "Projection"
+    // Get shader location for uniform mat4 "Projection"
     GLint proj_loc = glGetUniformLocation(shader->GetProgramID(), "Projection");
 
-    // TODO(student): Set shader uniform "Projection" to projectionMatrix
+    // Set shader uniform "Projection" to projectionMatrix
     glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
@@ -556,7 +523,7 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
 
     // - activate texture location 0
     glActiveTexture(GL_TEXTURE0);
-    // - bind the texture1 ID
+    // - bind the texture ID
     glBindTexture(GL_TEXTURE_2D, mapTextures["random"]->GetTextureID());
     // - send theuniform value
     glUniform1i(glGetUniformLocation(shader->program, "gen_texture"), 0);
@@ -566,76 +533,30 @@ void Tema3::RenderSimpleMesh_Floor(Mesh* mesh, Shader* shader, const glm::mat4& 
     glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
 }
 
-void Tema3::RenderSimpleMesh_1Light(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color, const glm::vec3& lightPosition)
-{
-    if (!mesh || !shader || !shader->GetProgramID())
-        return;
-
-    // Render an object using the specified shader and the specified position
-    glUseProgram(shader->program);
-
-    // Set shader uniforms for light properties
-    int light_position = glGetUniformLocation(shader->program, "light_position");
-    glUniform3f(light_position, lightPosition.x, lightPosition.y, lightPosition.z);
-
-    /*
-    int light_direction = glGetUniformLocation(shader->program, "light_direction");
-    glUniform3f(light_direction, lightDirection.x, lightDirection.y, lightDirection.z);
-    */
-    // Set eye position (camera position) uniform
-    glm::vec3 eyePosition = GetSceneCamera()->m_transform->GetWorldPosition();
-    int eye_position = glGetUniformLocation(shader->program, "eye_position");
-    glUniform3f(eye_position, eyePosition.x, eyePosition.y, eyePosition.z);
-
-    // Set material property uniforms (shininess, kd, ks, object color) 
-    int material_shininess = glGetUniformLocation(shader->program, "material_shininess");
-    glUniform1i(material_shininess, materialShininess);
-
-    int material_kd = glGetUniformLocation(shader->program, "material_kd");
-    glUniform1f(material_kd, materialKd);
-
-    int material_ks = glGetUniformLocation(shader->program, "material_ks");
-    glUniform1f(material_ks, materialKs);
-
-    int object_color = glGetUniformLocation(shader->program, "object_color");
-    glUniform3f(object_color, color.r, color.g, color.b);
-    /*
-    // TODO(student): Set any other shader uniforms that you need
-    GLint type = glGetUniformLocation(shader->program, "is_spotlight");
-    glUniform1i(type, isSpotlight);
-
-    GLfloat cut_off = glGetUniformLocation(shader->program, "cut_off_angle");
-    glUniform1f(cut_off, cutOff);
-    */
-    // Bind model matrix
-    GLint loc_model_matrix = glGetUniformLocation(shader->program, "Model");
-    glUniformMatrix4fv(loc_model_matrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-    // Bind view matrix
-    glm::mat4 viewMatrix = GetSceneCamera()->GetViewMatrix();
-    int loc_view_matrix = glGetUniformLocation(shader->program, "View");
-    glUniformMatrix4fv(loc_view_matrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-
-    // Bind projection matrix
-    glm::mat4 projectionMatrix = GetSceneCamera()->GetProjectionMatrix();
-    int loc_projection_matrix = glGetUniformLocation(shader->program, "Projection");
-    glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-    // Draw the object
-    glBindVertexArray(mesh->GetBuffers()->m_VAO);
-    glDrawElements(mesh->GetDrawMode(), static_cast<int>(mesh->indices.size()), GL_UNSIGNED_INT, 0);
+void Tema3::RenderMeshCentered(int a, int b, const glm::mat4& modelMatrix, Mesh* mesh) {
+    RenderSimpleMesh_9Lights(mesh, shaders["NineLights"], modelMatrix,
+        floor[a][b], glm::vec3(a + 0.5, 0, b + 0.5),
+        floor[a][b + 1], glm::vec3(a + 0.5, 0, b + 1 + 0.5),
+        floor[a][b - 1], glm::vec3(a + 0.5, 0, b - 1 + 0.5),
+        floor[a + 1][b], glm::vec3(a + 1 + 0.5, 0, b + 0.5),
+        floor[a + 1][b + 1], glm::vec3(a + 1 + 0.5, 0, b + 1 + 0.5),
+        floor[a + 1][b - 1], glm::vec3(a + 1 + 0.5, 0, b - 1 + 0.5),
+        floor[a - 1][b], glm::vec3(a - 1 + 0.5, 0, b + 0.5),
+        floor[a - 1][b + 1], glm::vec3(a - 1 + 0.5, 0, b + 1 + 0.5),
+        floor[a - 1][b - 1], glm::vec3(a - 1 + 0.5, 0, b - 1 + 0.5)
+    );
 }
 
 void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix,
-                                        const glm::vec3& color1 = glm::vec3(-1), const glm::vec3& lightPosition1 = glm::vec3(-1),
-                                        const glm::vec3& color2 = glm::vec3(-1), const glm::vec3& lightPosition2 = glm::vec3(-1),
-                                        const glm::vec3& color3 = glm::vec3(-1), const glm::vec3& lightPosition3 = glm::vec3(-1),
-                                        const glm::vec3& color4 = glm::vec3(-1), const glm::vec3& lightPosition4 = glm::vec3(-1),
-                                        const glm::vec3& color5 = glm::vec3(-1), const glm::vec3& lightPosition5 = glm::vec3(-1),
-                                        const glm::vec3& color6 = glm::vec3(-1), const glm::vec3& lightPosition6 = glm::vec3(-1),
-                                        const glm::vec3& color7 = glm::vec3(-1), const glm::vec3& lightPosition7 = glm::vec3(-1),
-                                        const glm::vec3& color8 = glm::vec3(-1), const glm::vec3& lightPosition8 = glm::vec3(-1),
-                                        const glm::vec3& color9 = glm::vec3(-1), const glm::vec3& lightPosition9 = glm::vec3(-1)
+                                        const glm::vec3& color1, const glm::vec3& lightPosition1,
+                                        const glm::vec3& color2, const glm::vec3& lightPosition2,
+                                        const glm::vec3& color3, const glm::vec3& lightPosition3,
+                                        const glm::vec3& color4, const glm::vec3& lightPosition4,
+                                        const glm::vec3& color5, const glm::vec3& lightPosition5,
+                                        const glm::vec3& color6, const glm::vec3& lightPosition6,
+                                        const glm::vec3& color7, const glm::vec3& lightPosition7,
+                                        const glm::vec3& color8, const glm::vec3& lightPosition8,
+                                        const glm::vec3& color9, const glm::vec3& lightPosition9
 )
 {
     if (!mesh || !shader || !shader->GetProgramID())
@@ -645,32 +566,6 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
     glUseProgram(shader->program);
 
     // Set shader uniforms for light properties
-    int light_position1 = glGetUniformLocation(shader->program, "light_position1");
-    glUniform3f(light_position1, lightPosition1.x, lightPosition1.y, lightPosition1.z);
-
-    int light_position2 = glGetUniformLocation(shader->program, "light_position2");
-    glUniform3f(light_position2, lightPosition2.x, lightPosition2.y, lightPosition2.z);
-
-    int light_position3 = glGetUniformLocation(shader->program, "light_position3");
-    glUniform3f(light_position3, lightPosition3.x, lightPosition3.y, lightPosition3.z);
-
-    int light_position4 = glGetUniformLocation(shader->program, "light_position4");
-    glUniform3f(light_position4, lightPosition4.x, lightPosition4.y, lightPosition4.z);
-
-    int light_position5 = glGetUniformLocation(shader->program, "light_position5");
-    glUniform3f(light_position5, lightPosition5.x, lightPosition5.y, lightPosition5.z);
-
-    int light_position6 = glGetUniformLocation(shader->program, "light_position6");
-    glUniform3f(light_position6, lightPosition6.x, lightPosition6.y, lightPosition6.z);
-
-    int light_position7 = glGetUniformLocation(shader->program, "light_position7");
-    glUniform3f(light_position7, lightPosition7.x, lightPosition7.y, lightPosition7.z);
-
-    int light_position8 = glGetUniformLocation(shader->program, "light_position8");
-    glUniform3f(light_position8, lightPosition8.x, lightPosition8.y, lightPosition8.z);
-
-    int light_position9 = glGetUniformLocation(shader->program, "light_position9");
-    glUniform3f(light_position9, lightPosition9.x, lightPosition9.y, lightPosition9.z);
 
     // Set eye position (camera position) uniform
     glm::vec3 eyePosition = GetSceneCamera()->m_transform->GetWorldPosition();
@@ -687,32 +582,33 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
     int material_ks = glGetUniformLocation(shader->program, "material_ks");
     glUniform1f(material_ks, materialKs);
 
-    int object1_color = glGetUniformLocation(shader->program, "object1_color");
-    glUniform3f(object1_color, color1.r, color1.g, color1.b);
+    glm::vec3 light_pos[9];
+    light_pos[0] = lightPosition1;
+    light_pos[1] = lightPosition2;
+    light_pos[2] = lightPosition3;
+    light_pos[3] = lightPosition4;
+    light_pos[4] = lightPosition5;
+    light_pos[5] = lightPosition6;
+    light_pos[6] = lightPosition7;
+    light_pos[7] = lightPosition8;
+    light_pos[8] = lightPosition9;
 
-    int object2_color = glGetUniformLocation(shader->program, "object2_color");
-    glUniform3f(object2_color, color2.r, color2.g, color2.b);
+    GLuint light_pos_loc = glGetUniformLocation(shader->program, "light_position");
+    glUniform3fv(light_pos_loc, 9, glm::value_ptr(light_pos[0]));
 
-    int object3_color = glGetUniformLocation(shader->program, "object3_color");
-    glUniform3f(object3_color, color3.r, color3.g, color3.b);
+    glm::vec3 obj_col[9];
+    obj_col[0] = color1;
+    obj_col[1] = color2;
+    obj_col[2] = color3;
+    obj_col[3] = color4;
+    obj_col[4] = color5;
+    obj_col[5] = color6;
+    obj_col[6] = color7;
+    obj_col[7] = color8;
+    obj_col[8] = color9;
 
-    int object4_color = glGetUniformLocation(shader->program, "object4_color");
-    glUniform3f(object4_color, color4.r, color4.g, color4.b);
-
-    int object5_color = glGetUniformLocation(shader->program, "object5_color");
-    glUniform3f(object5_color, color5.r, color5.g, color5.b);
-
-    int object6_color = glGetUniformLocation(shader->program, "object6_color");
-    glUniform3f(object6_color, color6.r, color6.g, color6.b);
-
-    int object7_color = glGetUniformLocation(shader->program, "object7_color");
-    glUniform3f(object7_color, color7.r, color7.g, color7.b);
-
-    int object8_color = glGetUniformLocation(shader->program, "object8_color");
-    glUniform3f(object8_color, color8.r, color8.g, color8.b);
-
-    int object9_color = glGetUniformLocation(shader->program, "object9_color");
-    glUniform3f(object9_color, color9.r, color9.g, color9.b);
+    GLuint light_col_loc = glGetUniformLocation(shader->program, "object_color");
+    glUniform3fv(light_col_loc, 9, glm::value_ptr(obj_col[0]));
 
     GLuint spot_pos_loc = glGetUniformLocation(shader->program, "spotLightPos");
     glUniform3fv(spot_pos_loc, SPOTLIGHTS, glm::value_ptr(spot_pos[0]));
@@ -740,7 +636,7 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
 
     // - activate texture location 0
     glActiveTexture(GL_TEXTURE0);
-    // - bind the texture1 ID
+    // - bind the texture ID
     glBindTexture(GL_TEXTURE_2D, mapTextures["random"]->GetTextureID());
     // - send theuniform value
     glUniform1i(glGetUniformLocation(shader->program, "gen_texture"), 0);
@@ -765,7 +661,7 @@ void Tema3::RenderSimpleMesh_9Lights(Mesh* mesh, Shader* shader, const glm::mat4
 }
 
 
-void Tema3::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & modelMatrix, Texture2D* texture1, Texture2D* texture2)
+void Tema3::RenderSimpleMesh_DiscoBall(Mesh *mesh, Shader *shader, const glm::mat4 & modelMatrix, Texture2D* texture)
 {
     if (!mesh || !shader || !shader->GetProgramID())
         return;
@@ -787,36 +683,19 @@ void Tema3::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & model
     int loc_projection_matrix = glGetUniformLocation(shader->program, "Projection");
     glUniformMatrix4fv(loc_projection_matrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    // TODO(student): Set any other shader uniforms that you need
-    /*
-    glUniform1i(glGetUniformLocation(shader->program, "mix_tex"), mix);
-    glUniform1i(glGetUniformLocation(shader->program, "earth"), earth);
-    */
+    // Set any other shader uniforms that you need
     GLint loc_time = glGetUniformLocation(shader->program, "time");
     glUniform1f(loc_time, (GLfloat)Engine::GetElapsedTime());
 
 
-    if (texture1)
+    if (texture)
     {
-        // TODO(student): Do these:
         // - activate texture location 0
         glActiveTexture(GL_TEXTURE0);
         // - bind the texture1 ID
-        glBindTexture(GL_TEXTURE_2D, texture1->GetTextureID());
+        glBindTexture(GL_TEXTURE_2D, texture->GetTextureID());
         // - send theuniform value
         glUniform1i(glGetUniformLocation(shader->program, "texture_1"), 0);
-
-    }
-
-    if (texture2)
-    {
-        // TODO(student): Do these:
-        // - activate texture location 1
-        glActiveTexture(GL_TEXTURE1);
-        // - bind the texture2 ID
-        glBindTexture(GL_TEXTURE_2D, texture2->GetTextureID());
-        // - send the uniform value
-        glUniform1i(glGetUniformLocation(shader->program, "texture_2"), 1);
 
     }
 
@@ -833,19 +712,19 @@ Texture2D* Tema3::CreateRandomTexture(unsigned int width, unsigned int height)
     unsigned int size = width * height * channels;
     unsigned char* data = new unsigned char[size];
 
-    // TODO(student): Generate random texture data
+    // Generate random texture data
     for (int i = 0; i < size; i++) {
         data[i] = rand() % 256;
     }
 
-    // TODO(student): Generate and bind the new texture ID
-    // unsigned int gl_texture_object;
+    // Generate and bind the new texture ID
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     if (GLEW_EXT_texture_filter_anisotropic) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4);
     }
+
     // Set the texture parameters (MIN_FILTER, MAG_FILTER and WRAPPING MODE) using glTexParameteri
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -857,7 +736,7 @@ Texture2D* Tema3::CreateRandomTexture(unsigned int width, unsigned int height)
     // Use glTexImage2D to set the texture data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
-    // TODO(student): Generate texture mip-maps
+    // TGenerate texture mip-maps
     glGenerateMipmap(GL_TEXTURE_2D);
 
     CheckOpenGLError();
@@ -885,21 +764,6 @@ void Tema3::OnInputUpdate(float deltaTime, int mods)
         glm::vec3 forward = GetSceneCamera()->m_transform->GetLocalOZVector();
         forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
     }
-
-    /*
-    if (window->KeyHold(GLFW_KEY_LEFT)) {
-        spot_angle_z[0] -= deltaTime;
-    }
-    if (window->KeyHold(GLFW_KEY_RIGHT)) {
-        spot_angle_z[0] += deltaTime;
-    }
-    if (window->KeyHold(GLFW_KEY_UP)) {
-        spot_angle_x[0] += deltaTime;
-    }
-    if (window->KeyHold(GLFW_KEY_DOWN)) {
-        spot_angle_x[0] -= deltaTime;
-    }
-    */
 }
 
 
@@ -940,6 +804,15 @@ void Tema3::OnKeyPress(int key, int mods)
             floorlights_mode = ON;
             spotlights_mode = ON;
             discolights_mode = ON;
+        }
+    }
+
+    if (key == GLFW_KEY_M) {
+        if (character + 1 < NUM_OF_CHARS) {
+            character++;
+        }
+        else {
+            character = 0;
         }
     }
 }
