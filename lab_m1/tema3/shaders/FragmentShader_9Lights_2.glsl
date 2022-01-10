@@ -193,7 +193,7 @@ vec3 DiscoLightContribution()
 
     // texcoord este coordonata de textura utilizata pentru esantionare
     vec2 texcoord;
-    texcoord.x = (1.0 / (2 * 3.14159)) * atan (light_direction.x, light_direction.z);
+    texcoord.x = (1.0 / (2 * 3.14159)) * (atan (light_direction.x, light_direction.z) + 3.14159);
     texcoord.y = (1.0 / 3.14159) * acos (light_direction.y / length (light_direction));
 
     texcoord = vec2(texcoord.x + time / 10, texcoord.y);
