@@ -63,10 +63,10 @@ int main(int argc, char **argv)
     // World* world = new m1::Lab6();
     // World* world = new m1::Lab7();
 
-    // World* world = new m1::Tema2();
+    World* world = new m1::Tema2();
 
     // World* world = new m1::Lab8();
-    World* world = new m1::Lab9();
+    // World* world = new m1::Lab9();
 
     world->Init();
     world->Run();
