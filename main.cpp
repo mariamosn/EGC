@@ -45,11 +45,12 @@ int main(int argc, char **argv)
 
     // Create a new 3D world and start running it
     // World *world = new gfxc::SimpleScene();
-    // World *world = new m1::Lab1();
     // World *world = new m2::Lab1();
     // World *world = new extra::TessellationShader();
+  
+    // World *world = new m1::Lab1();
     // World* world = new m1::Lab2();
-
+  
     // World *world = new m1::Lab3();
     // World* world = new m1::Lab3_Vis2D();
     // Bonus: sistem solar
@@ -63,10 +64,12 @@ int main(int argc, char **argv)
     // World* world = new m1::Lab6();
     // World* world = new m1::Lab7();
 
-    World* world = new m1::Tema2();
+    // World* world = new m1::Tema2();
 
     // World* world = new m1::Lab8();
     // World* world = new m1::Lab9();
+
+    World* world = new m1::Tema3();
 
     world->Init();
     world->Run();
